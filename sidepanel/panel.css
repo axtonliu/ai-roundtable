@@ -107,6 +107,45 @@ header .subtitle {
   gap: 8px;
 }
 
+/* Action & Shortcut Buttons Row */
+.action-buttons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.action-select {
+  padding: 4px 8px;
+  border: 1px solid #6366f1;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.action-select:focus {
+  outline: none;
+  border-color: #818cf8;
+}
+
+.shortcut-btn {
+  padding: 4px 10px;
+  border: 1px solid #6366f1;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Monaco', 'Consolas', monospace;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.shortcut-btn:hover {
+  background: rgba(99, 102, 241, 0.25);
+}
+
 /* Mention Buttons */
 .mention-buttons {
   display: flex;
@@ -258,111 +297,6 @@ header .subtitle {
   color: #666;
   display: block;
   margin-top: 2px;
-}
-
-/* Cross-Reference Section */
-.cross-ref-section {
-  margin-top: 4px;
-}
-
-.cross-ref-section summary {
-  cursor: pointer;
-  color: #6366f1;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 8px 0;
-}
-
-.cross-ref-section summary:hover {
-  color: #818cf8;
-}
-
-.cross-ref-form {
-  background: #252540;
-  border-radius: 8px;
-  padding: 12px;
-  margin-top: 8px;
-}
-
-.cross-ref-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.cross-ref-field {
-  flex: 1;
-}
-
-.cross-ref-field.full-width {
-  flex: 1;
-}
-
-.cross-ref-field label {
-  display: block;
-  font-size: 11px;
-  color: #888;
-  margin-bottom: 4px;
-}
-
-.cross-ref-field select {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #444;
-  border-radius: 6px;
-  background: #1a1a2e;
-  color: #eee;
-  font-size: 13px;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-}
-
-.cross-ref-field select:focus {
-  outline: none;
-  border-color: #6366f1;
-}
-
-.cross-ref-field select:hover {
-  border-color: #666;
-}
-
-.cross-ref-arrow {
-  color: #6366f1;
-  font-size: 18px;
-  font-weight: bold;
-  padding-bottom: 8px;
-}
-
-.cross-ref-execute {
-  width: 100%;
-  padding: 10px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.cross-ref-execute:hover {
-  background: linear-gradient(135deg, #5355d1, #7c4ce6);
-  transform: translateY(-1px);
-}
-
-.cross-ref-execute:active {
-  transform: translateY(0);
-}
-
-.cross-ref-execute:disabled {
-  background: #444;
-  cursor: not-allowed;
-  transform: none;
 }
 
 /* Log Section */
