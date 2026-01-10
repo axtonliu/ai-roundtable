@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Panel</title>
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>AI 圆桌</h1>
+      <p class="subtitle">Multi-AI Roundtable</p>
+    </header>
+
+    <!-- Mode Switcher -->
+    <section class="mode-switcher">
+      <button class="mode-btn active" id="mode-normal">Normal</button>
+      <button class="mode-btn" id="mode-discussion">Discussion</button>
+    </section>
+
+    <!-- Normal Mode Content -->
+    <div id="normal-mode">
+      <section class="targets">
+      <label class="target-label">
+        <input type="checkbox" id="target-claude" checked>
+        <span class="target-name claude">Claude</span>
+        <span class="status" id="status-claude">-</span>
+      </label>
+      <label class="target-label">
+        <input type="checkbox" id="target-chatgpt" checked>
+        <span class="target-name chatgpt">ChatGPT</span>
+        <span class="status" id="status-chatgpt">-</span>
+      </label>
+      <label class="target-label">
+        <input type="checkbox" id="target-gemini" checked>
+        <span class="target-name gemini">Gemini</span>
+        <span class="status" id="status-gemini">-</span>
+      </label>
+    </section>
+
+    <section class="input-section">
+      <div class="mention-buttons">
+        <span class="mention-label">@</span>
+        <button class="mention-btn claude" data-mention="@Claude">Claude</button>
+        <button class="mention-btn chatgpt" data-mention="@ChatGPT">ChatGPT</button>
+        <button class="mention-btn gemini" data-mention="@Gemini">Gemini</button>
+      </div>
+      <textarea
+        id="message-input"
+        placeholder="Enter your message...&#10;&#10;Click @ buttons above or type @Claude @ChatGPT @Gemini"
+        rows="6"
+      ></textarea>
+      <button id="send-btn">Send</button>
+    </section>
+
+    <section class="help">
+      <details>
+        <summary>Cross-reference syntax</summary>
+        <ul>
+          <li><code>@Claude evaluate @ChatGPT</code></li>
+          <li><code>@Gemini what do you think of @Claude's answer</code></li>
+        </ul>
+      </details>
+    </section>
+    </div><!-- end normal-mode -->
+
+    <!-- Discussion Mode Content -->
+    <div id="discussion-mode" class="hidden">
+      <section class="discussion-setup" id="discussion-setup">
+        <h3>Start Discussion</h3>
+        <div class="participant-select">
+          <label>Participants:</label>
+          <div class="participant-options">
+            <label class="participant-option">
+              <input type="checkbox" name="participant" value="claude" checked>
+              <span class="target-name claude">Claude</span>
+            </label>
+            <label class="participant-option">
+              <input type="checkbox" name="participant" value="chatgpt" checked>
+              <span class="target-name chatgpt">ChatGPT</span>
+            </label>
+            <label class="participant-option">
+              <input type="checkbox" name="participant" value="gemini">
+              <span class="target-name gemini">Gemini</span>
+            </label>
+          </div>
+          <p class="hint">Select exactly 2 participants</p>
+        </div>
+        <textarea
+          id="discussion-topic"
+          placeholder="Enter discussion topic...&#10;&#10;Example: What are the pros and cons of microservices vs monolithic architecture?"
+          rows="4"
+        ></textarea>
+        <button id="start-discussion-btn">Start Discussion</button>
+      </section>
+
+      <section class="discussion-active hidden" id="discussion-active">
+        <div class="discussion-header">
+          <div class="discussion-info">
+            <span class="round-badge" id="round-badge">Round 1</span>
+            <span class="participants-badge" id="participants-badge">Claude vs ChatGPT</span>
+          </div>
+          <button class="end-btn" id="end-discussion-btn">End</button>
+        </div>
+        <div class="discussion-topic-display" id="topic-display"></div>
+        <div class="discussion-status" id="discussion-status">
+          Waiting for initial responses...
+        </div>
+        <div class="discussion-controls">
+          <button id="next-round-btn" disabled>Next Round</button>
+          <button id="generate-summary-btn" disabled>Generate Summary</button>
+        </div>
+      </section>
+
+      <section class="discussion-summary hidden" id="discussion-summary">
+        <h3>Discussion Summary</h3>
+        <div id="summary-content"></div>
+        <button id="new-discussion-btn">New Discussion</button>
+      </section>
+    </div><!-- end discussion-mode -->
+
+    <section class="log">
+      <h3>Activity Log</h3>
+      <div id="log-container"></div>
+    </section>
+
+    <footer class="copyright">
+      © 2025 Axton Liu · AI 精英学院
+    </footer>
+  </div>
+
+  <script src="panel.js"></script>
+</body>
+</html>

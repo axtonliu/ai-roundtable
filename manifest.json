@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "AI 圆桌 - Multi-AI Roundtable",
+  "version": "1.0.0",
+  "description": "让多个 AI 助手围桌讨论，交叉评价，深度协作",
+
+  "permissions": [
+    "sidePanel",
+    "activeTab",
+    "tabs",
+    "scripting",
+    "storage"
+  ],
+
+  "host_permissions": [
+    "https://claude.ai/*",
+    "https://chat.openai.com/*",
+    "https://chatgpt.com/*",
+    "https://gemini.google.com/*"
+  ],
+
+  "side_panel": {
+    "default_path": "sidepanel/panel.html"
+  },
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://claude.ai/*"],
+      "js": ["content/claude.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://chat.openai.com/*", "https://chatgpt.com/*"],
+      "js": ["content/chatgpt.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://gemini.google.com/*"],
+      "js": ["content/gemini.js"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+
+  "action": {
+    "default_title": "打开 AI 圆桌"
+  }
+}
