@@ -452,6 +452,7 @@ function setupDiscussionMode() {
   document.getElementById('end-discussion-btn').addEventListener('click', endDiscussion);
   document.getElementById('generate-summary-btn').addEventListener('click', generateSummary);
   document.getElementById('new-discussion-btn').addEventListener('click', resetDiscussion);
+  document.getElementById('interject-btn').addEventListener('click', handleInterject);
 
   // Participant selection validation
   document.querySelectorAll('input[name="participant"]').forEach(checkbox => {
@@ -619,12 +620,72 @@ Please evaluate this response. What do you agree with? What do you disagree with
   await sendToAI(ai2, msg2);
 }
 
+async function handleInterject() {
+  const input = document.getElementById('interject-input');
+  const message = input.value.trim();
+
+  if (!message) {
+    log('请输入要发送的消息', 'error');
+    return;
+  }
+
+  if (!discussionState.active || discussionState.participants.length === 0) {
+    log('当前没有进行中的讨论', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('interject-btn');
+  btn.disabled = true;
+
+  const [ai1, ai2] = discussionState.participants;
+
+  log(`[插话] 正在获取双方最新回复...`);
+
+  // Get latest responses from both participants
+  const ai1Response = await getLatestResponse(ai1);
+  const ai2Response = await getLatestResponse(ai2);
+
+  if (!ai1Response || !ai2Response) {
+    log(`[插话] 无法获取回复，请确保双方都已回复`, 'error');
+    btn.disabled = false;
+    return;
+  }
+
+  log(`[插话] 已获取双方回复，正在发送...`);
+
+  // Send to AI1: user message + AI2's response
+  const msg1 = `${message}
+
+以下是 ${capitalize(ai2)} 的最新回复：
+
+<${ai2}_response>
+${ai2Response}
+</${ai2}_response>`;
+
+  // Send to AI2: user message + AI1's response
+  const msg2 = `${message}
+
+以下是 ${capitalize(ai1)} 的最新回复：
+
+<${ai1}_response>
+${ai1Response}
+</${ai1}_response>`;
+
+  await sendToAI(ai1, msg1);
+  await sendToAI(ai2, msg2);
+
+  log(`[插话] 已发送给双方（含对方回复）`, 'success');
+
+  // Clear input
+  input.value = '';
+  btn.disabled = false;
+}
+
 async function generateSummary() {
   document.getElementById('generate-summary-btn').disabled = true;
-  updateDiscussionStatus('waiting', 'Generating summary...');
+  updateDiscussionStatus('waiting', 'Generating summaries from both AIs...');
 
-  // Use the first AI to generate summary
-  const summaryAI = discussionState.participants[0];
+  const [ai1, ai2] = discussionState.participants;
 
   // Build conversation history for summary
   let historyText = `Topic: ${discussionState.topic}\n\n`;
@@ -637,54 +698,62 @@ async function generateSummary() {
     }
   }
 
-  const summaryPrompt = `Please provide a comprehensive summary of the following discussion between AI assistants. Highlight:
-1. Key points of agreement
-2. Key points of disagreement
-3. Main insights from each participant
-4. Overall conclusions
+  const summaryPrompt = `请对以下 AI 之间的讨论进行总结。请包含：
+1. 主要共识点
+2. 主要分歧点
+3. 各方的核心观点
+4. 总体结论
 
-Discussion history:
+讨论历史：
 ${historyText}`;
 
-  // We'll capture this response specially
+  // Send to both AIs
   discussionState.roundType = 'summary';
-  discussionState.pendingResponses = new Set([summaryAI]);
+  discussionState.pendingResponses = new Set([ai1, ai2]);
 
-  await sendToAI(summaryAI, summaryPrompt);
+  log(`[Summary] 正在请求双方生成总结...`);
+  await sendToAI(ai1, summaryPrompt);
+  await sendToAI(ai2, summaryPrompt);
 
-  // Wait for response, then show summary
-  // The response will be captured in handleDiscussionResponse
-  // We need to watch for it and then display
+  // Wait for both responses, then show summary
   const checkForSummary = setInterval(async () => {
     if (discussionState.pendingResponses.size === 0) {
       clearInterval(checkForSummary);
 
-      const summaryEntry = discussionState.history.find(
-        h => h.type === 'summary'
-      );
+      // Get both summaries
+      const summaries = discussionState.history.filter(h => h.type === 'summary');
+      const ai1Summary = summaries.find(s => s.ai === ai1)?.content || '';
+      const ai2Summary = summaries.find(s => s.ai === ai2)?.content || '';
 
-      if (summaryEntry) {
-        showSummary(summaryEntry.content);
-      }
+      log(`[Summary] 双方总结已生成`, 'success');
+      showSummary(ai1Summary, ai2Summary);
     }
   }, 500);
 }
 
-function showSummary(summaryContent) {
+function showSummary(ai1Summary, ai2Summary) {
   document.getElementById('discussion-active').classList.add('hidden');
   document.getElementById('discussion-summary').classList.remove('hidden');
 
-  // Build summary HTML
+  const [ai1, ai2] = discussionState.participants;
+
+  // Build summary HTML - show both summaries side by side conceptually
   let html = `<div class="round-summary">
-    <h4>Discussion Summary</h4>
-    <div class="ai-response">
-      <div class="ai-name ${discussionState.participants[0]}">${capitalize(discussionState.participants[0])}'s Summary:</div>
-      <div>${escapeHtml(summaryContent).replace(/\n/g, '<br>')}</div>
+    <h4>双方总结对比</h4>
+    <div class="summary-comparison">
+      <div class="ai-response">
+        <div class="ai-name ${ai1}">${capitalize(ai1)} 的总结：</div>
+        <div>${escapeHtml(ai1Summary).replace(/\n/g, '<br>')}</div>
+      </div>
+      <div class="ai-response">
+        <div class="ai-name ${ai2}">${capitalize(ai2)} 的总结：</div>
+        <div>${escapeHtml(ai2Summary).replace(/\n/g, '<br>')}</div>
+      </div>
     </div>
   </div>`;
 
   // Add round-by-round history
-  html += `<div class="round-summary"><h4>Full Discussion History</h4>`;
+  html += `<div class="round-summary"><h4>完整讨论历史</h4>`;
   for (let round = 1; round <= discussionState.currentRound; round++) {
     const roundEntries = discussionState.history.filter(h => h.round === round && h.type !== 'summary');
     if (roundEntries.length > 0) {
