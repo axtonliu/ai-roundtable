@@ -488,7 +488,7 @@ function validateParticipants() {
 async function startDiscussion() {
   const topic = document.getElementById('discussion-topic').value.trim();
   if (!topic) {
-    log('Please enter a discussion topic', 'error');
+    log('请输入讨论主题', 'error');
     return;
   }
 
@@ -496,7 +496,7 @@ async function startDiscussion() {
     .map(cb => cb.value);
 
   if (selected.length !== 2) {
-    log('Please select exactly 2 participants', 'error');
+    log('请选择 2 位参与者', 'error');
     return;
   }
 
@@ -514,17 +514,17 @@ async function startDiscussion() {
   // Update UI
   document.getElementById('discussion-setup').classList.add('hidden');
   document.getElementById('discussion-active').classList.remove('hidden');
-  document.getElementById('round-badge').textContent = 'Round 1';
+  document.getElementById('round-badge').textContent = '第 1 轮';
   document.getElementById('participants-badge').textContent =
     `${capitalize(selected[0])} vs ${capitalize(selected[1])}`;
   document.getElementById('topic-display').textContent = topic;
-  updateDiscussionStatus('waiting', `Waiting for initial responses from ${selected.join(' and ')}...`);
+  updateDiscussionStatus('waiting', `等待 ${selected.join(' 和 ')} 的初始回复...`);
 
   // Disable buttons during round
   document.getElementById('next-round-btn').disabled = true;
   document.getElementById('generate-summary-btn').disabled = true;
 
-  log(`Discussion started: ${selected.join(' vs ')}`, 'success');
+  log(`讨论开始: ${selected.join(' vs ')}`, 'success');
 
   // Send topic to both AIs
   for (const ai of selected) {
@@ -546,20 +546,20 @@ function handleDiscussionResponse(aiType, content) {
   // Remove from pending
   discussionState.pendingResponses.delete(aiType);
 
-  log(`Discussion: ${aiType} responded (Round ${discussionState.currentRound})`, 'success');
+  log(`讨论: ${aiType} 已回复 (第 ${discussionState.currentRound} 轮)`, 'success');
 
   // Check if all pending responses received
   if (discussionState.pendingResponses.size === 0) {
     onRoundComplete();
   } else {
     const remaining = Array.from(discussionState.pendingResponses).join(', ');
-    updateDiscussionStatus('waiting', `Waiting for ${remaining}...`);
+    updateDiscussionStatus('waiting', `等待 ${remaining}...`);
   }
 }
 
 function onRoundComplete() {
-  log(`Round ${discussionState.currentRound} complete`, 'success');
-  updateDiscussionStatus('ready', `Round ${discussionState.currentRound} complete. Ready for next round.`);
+  log(`第 ${discussionState.currentRound} 轮完成`, 'success');
+  updateDiscussionStatus('ready', `第 ${discussionState.currentRound} 轮完成，可以进入下一轮`);
 
   // Enable next round button
   document.getElementById('next-round-btn').disabled = false;
@@ -571,7 +571,7 @@ async function nextRound() {
   const [ai1, ai2] = discussionState.participants;
 
   // Update UI
-  document.getElementById('round-badge').textContent = `Round ${discussionState.currentRound}`;
+  document.getElementById('round-badge').textContent = `第 ${discussionState.currentRound} 轮`;
   document.getElementById('next-round-btn').disabled = true;
   document.getElementById('generate-summary-btn').disabled = true;
 
@@ -585,7 +585,7 @@ async function nextRound() {
   )?.content;
 
   if (!ai1Response || !ai2Response) {
-    log('Missing responses from previous round', 'error');
+    log('缺少上一轮的回复', 'error');
     return;
   }
 
@@ -593,9 +593,9 @@ async function nextRound() {
   discussionState.pendingResponses = new Set([ai1, ai2]);
   discussionState.roundType = 'cross-eval';
 
-  updateDiscussionStatus('waiting', `Cross-evaluation: ${ai1} evaluates ${ai2}, ${ai2} evaluates ${ai1}...`);
+  updateDiscussionStatus('waiting', `交叉评价: ${ai1} 评价 ${ai2}，${ai2} 评价 ${ai1}...`);
 
-  log(`Round ${discussionState.currentRound}: Cross-evaluation started`);
+  log(`第 ${discussionState.currentRound} 轮: 交叉评价开始`);
 
   // Send cross-evaluation requests
   // AI1 evaluates AI2's response
@@ -683,15 +683,15 @@ ${ai1Response}
 
 async function generateSummary() {
   document.getElementById('generate-summary-btn').disabled = true;
-  updateDiscussionStatus('waiting', 'Generating summaries from both AIs...');
+  updateDiscussionStatus('waiting', '正在请求双方生成总结...');
 
   const [ai1, ai2] = discussionState.participants;
 
   // Build conversation history for summary
-  let historyText = `Topic: ${discussionState.topic}\n\n`;
+  let historyText = `主题: ${discussionState.topic}\n\n`;
 
   for (let round = 1; round <= discussionState.currentRound; round++) {
-    historyText += `=== Round ${round} ===\n\n`;
+    historyText += `=== 第 ${round} 轮 ===\n\n`;
     const roundEntries = discussionState.history.filter(h => h.round === round);
     for (const entry of roundEntries) {
       historyText += `[${capitalize(entry.ai)}]:\n${entry.content}\n\n`;
@@ -739,7 +739,7 @@ function showSummary(ai1Summary, ai2Summary) {
 
   // Handle empty summaries
   if (!ai1Summary && !ai2Summary) {
-    log('Warning: No summary content received from AIs', 'error');
+    log('警告: 未收到 AI 的总结内容', 'error');
   }
 
   // Build summary HTML - show both summaries side by side conceptually
@@ -762,7 +762,7 @@ function showSummary(ai1Summary, ai2Summary) {
   for (let round = 1; round <= discussionState.currentRound; round++) {
     const roundEntries = discussionState.history.filter(h => h.round === round && h.type !== 'summary');
     if (roundEntries.length > 0) {
-      html += `<div style="margin-top:12px"><strong>Round ${round}</strong></div>`;
+      html += `<div style="margin-top:12px"><strong>第 ${round} 轮</strong></div>`;
       for (const entry of roundEntries) {
         const preview = entry.content.substring(0, 200) + (entry.content.length > 200 ? '...' : '');
         html += `<div class="ai-response">
@@ -776,11 +776,11 @@ function showSummary(ai1Summary, ai2Summary) {
 
   document.getElementById('summary-content').innerHTML = html;
   discussionState.active = false;
-  log('Discussion summary generated', 'success');
+  log('讨论总结已生成', 'success');
 }
 
 function endDiscussion() {
-  if (confirm('End this discussion? You can generate a summary first.')) {
+  if (confirm('确定结束讨论吗？建议先生成总结。')) {
     resetDiscussion();
   }
 }
@@ -804,7 +804,7 @@ function resetDiscussion() {
   document.getElementById('next-round-btn').disabled = true;
   document.getElementById('generate-summary-btn').disabled = true;
 
-  log('Discussion ended');
+  log('讨论已结束');
 }
 
 function updateDiscussionStatus(state, text) {

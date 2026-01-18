@@ -15,8 +15,8 @@
 
     <!-- Mode Switcher -->
     <section class="mode-switcher">
-      <button class="mode-btn active" id="mode-normal">Normal</button>
-      <button class="mode-btn" id="mode-discussion">Discussion</button>
+      <button class="mode-btn active" id="mode-normal">普通</button>
+      <button class="mode-btn" id="mode-discussion">讨论</button>
     </section>
 
     <!-- Normal Mode Content -->
@@ -61,10 +61,10 @@
       </div>
       <textarea
         id="message-input"
-        placeholder="Enter your message...&#10;&#10;互评: /mutual（基于当前回复）&#10;单向: @Claude 评价一下 @ChatGPT"
+        placeholder="输入消息...&#10;&#10;互评: /mutual（基于当前回复）&#10;单向: @Claude 评价一下 @ChatGPT"
         rows="6"
       ></textarea>
-      <button id="send-btn">Send</button>
+      <button id="send-btn">发送</button>
     </section>
 
     <section class="help">
@@ -87,9 +87,9 @@
     <!-- Discussion Mode Content -->
     <div id="discussion-mode" class="hidden">
       <section class="discussion-setup" id="discussion-setup">
-        <h3>Start Discussion</h3>
+        <h3>开始讨论</h3>
         <div class="participant-select">
-          <label>Participants:</label>
+          <label>参与者：</label>
           <div class="participant-options">
             <label class="participant-option">
               <input type="checkbox" name="participant" value="claude" checked>
@@ -104,27 +104,27 @@
               <span class="target-name gemini">Gemini</span>
             </label>
           </div>
-          <p class="hint">Select exactly 2 participants</p>
+          <p class="hint">请选择 2 位参与者</p>
         </div>
         <textarea
           id="discussion-topic"
-          placeholder="Enter discussion topic...&#10;&#10;Example: What are the pros and cons of microservices vs monolithic architecture?"
+          placeholder="输入讨论主题...&#10;&#10;示例：微服务架构和单体架构各有什么优缺点？"
           rows="4"
         ></textarea>
-        <button id="start-discussion-btn">Start Discussion</button>
+        <button id="start-discussion-btn">开始讨论</button>
       </section>
 
       <section class="discussion-active hidden" id="discussion-active">
         <div class="discussion-header">
           <div class="discussion-info">
-            <span class="round-badge" id="round-badge">Round 1</span>
+            <span class="round-badge" id="round-badge">第 1 轮</span>
             <span class="participants-badge" id="participants-badge">Claude vs ChatGPT</span>
           </div>
-          <button class="end-btn" id="end-discussion-btn">End</button>
+          <button class="end-btn" id="end-discussion-btn">结束</button>
         </div>
         <div class="discussion-topic-display" id="topic-display"></div>
         <div class="discussion-status" id="discussion-status">
-          Waiting for initial responses...
+          等待初始回复...
         </div>
         <div class="discussion-interject">
           <label>插话（同步发送给讨论双方）</label>
@@ -137,20 +137,20 @@
           </div>
         </div>
         <div class="discussion-controls">
-          <button id="next-round-btn" disabled>Next Round</button>
-          <button id="generate-summary-btn" disabled>Generate Summary</button>
+          <button id="next-round-btn" disabled>下一轮</button>
+          <button id="generate-summary-btn" disabled>生成总结</button>
         </div>
       </section>
 
       <section class="discussion-summary hidden" id="discussion-summary">
-        <h3>Discussion Summary</h3>
+        <h3>讨论总结</h3>
         <div id="summary-content"></div>
-        <button id="new-discussion-btn">New Discussion</button>
+        <button id="new-discussion-btn">新讨论</button>
       </section>
     </div><!-- end discussion-mode -->
 
     <section class="log">
-      <h3>Activity Log</h3>
+      <h3>活动日志</h3>
       <div id="log-container"></div>
     </section>
 
