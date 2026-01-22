@@ -1,7 +1,7 @@
 # AI 圆桌 中国版 (AI Roundtable CN)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/Version-0.4.0-brightgreen.svg)](https://github.com/firebear/ai-roundtable-cn)
+[![Version](https://img.shields.io/badge/Version-0.5.0-brightgreen.svg)](https://github.com/firebear/ai-roundtable-cn)
 [![Status: Stable](https://img.shields.io/badge/Status-Stable-success.svg)](#-稳定版本)
 
 > 让多个 AI 助手围桌讨论，交叉评价，深度协作 - 支持7个主流AI平台
@@ -99,10 +99,10 @@ I'm currently most satisfied with, and calibrated to, the **web chat experience*
 - ✅ **Gemini** - 完全自动化支持
 
 **国产AI**:
-- ✅ **DeepSeek** - 自动填入+响应捕获，需手动点击发送
-- ✅ **Kimi** - 自动填入+响应捕获，发送功能待测试
-- ✅ **ChatGLM** - 自动填入+响应捕获，发送功能待测试
-- ✅ **通义千问** - 自动填入+响应捕获，发送功能待测试
+- ✅ **DeepSeek** - 消息自动填入，需手动点击发送，响应自动捕获
+- ✅ **Kimi** - 完全自动化支持（Clipboard API + 打字模拟）
+- ✅ **ChatGLM** - 完全自动化支持
+- ✅ **通义千问** - 完全自动化支持
 
 ---
 
@@ -172,7 +172,7 @@ I'm currently most satisfied with, and calibrated to, the **web chat experience*
 1. 勾选要发送的目标 AI（Claude / ChatGPT / Gemini / DeepSeek / Kimi / ChatGLM / 通义千问）
 2. 输入消息
 3. 按 Enter 或点击「发送」按钮
-   - **国产AI用户注意**：插件会自动填入消息，部分平台可能需要手动点击发送按钮
+   - **DeepSeek用户注意**：消息会自动填入，发送按钮会高亮闪烁3秒，提示手动点击
 
 **@ 提及语法**
 - 点击 @ 按钮快速插入 AI 名称
@@ -285,7 +285,7 @@ ai-roundtable-cn/
 - 依赖各 AI 平台的 DOM 结构，平台更新可能导致功能失效
 - 讨论模式固定 2 个参与者
 - 不支持 Claude Artifacts、ChatGPT Canvas 等特殊功能
-- **DeepSeek需要手动点击发送按钮**（自动填入和响应捕获功能正常）
+- **DeepSeek需要手动点击发送按钮**（消息自动填入，按钮高亮提示，响应捕获正常）
 
 ---
 
