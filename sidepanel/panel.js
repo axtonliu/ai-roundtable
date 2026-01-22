@@ -916,7 +916,7 @@ function setupTabListener() {
     }
   });
 
-  // Also listen for tab activation (user switches tabs)
+  // Listen for tab activation (user switches tabs)
   chrome.tabs.onActivated.addListener(async (activeInfo) => {
     try {
       const tab = await chrome.tabs.get(activeInfo.tabId);
@@ -930,6 +930,12 @@ function setupTabListener() {
     } catch (err) {
       // Tab might be closed, ignore error
     }
+  });
+
+  // Listen for tab removal (tab closed) - update connection status
+  chrome.tabs.onRemoved.addListener(async (tabId) => {
+    // Check all AI types to see if any of them lost their last connection
+    await checkAllAIConnections();
   });
 }
 
@@ -960,5 +966,42 @@ function checkUserHint() {
   const hintEl = document.getElementById('user-hint');
   if (hintEl) {
     hintEl.style.display = hasConnected ? 'none' : 'block';
+  }
+}
+
+async function checkAllAIConnections() {
+  try {
+    // Get all open tabs
+    const tabs = await chrome.tabs.query({});
+
+    // Track which AI types are still connected
+    const stillConnected = {};
+
+    for (const tab of tabs) {
+      if (tab.url) {
+        const aiType = getAITypeFromUrl(tab.url);
+        if (aiType) {
+          stillConnected[aiType] = true;
+        }
+      }
+    }
+
+    // Update connection status for each AI type
+    for (const aiType of AI_TYPES) {
+      const wasConnected = connectedTabs[aiType];
+      const isConnected = stillConnected[aiType];
+
+      // If it was connected but now isn't, update status
+      if (wasConnected && !isConnected) {
+        updateTabStatus(aiType, false);
+        log(`${capitalize(aiType)} 连接已断开`, 'info');
+      }
+    }
+
+    // Update user hint visibility
+    checkUserHint();
+
+  } catch (err) {
+    log('检查连接状态时出错: ' + err.message, 'error');
   }
 }
