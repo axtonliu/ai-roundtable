@@ -60,7 +60,16 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDiscussionMode();
   setupConnectButtons();
   setupTabListener();
+  loadVersion();
 });
+
+function loadVersion() {
+  const manifest = chrome.runtime.getManifest();
+  const versionEl = document.getElementById('app-version');
+  if (versionEl && manifest.version) {
+    versionEl.textContent = `v${manifest.version}`;
+  }
+}
 
 function setupEventListeners() {
   sendBtn.addEventListener('click', handleSend);

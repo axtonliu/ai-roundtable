@@ -944,13 +944,18 @@ header .subtitle {
 
 /* Copyright Footer */
 .copyright {
-  text-align: center;
-  font-size: 11px;
-  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding-top: 12px;
   border-top: 1px solid var(--border-subtle);
   margin-top: auto;
   flex-shrink: 0;
+}
+
+.copyright-text {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .copyright a {
@@ -962,4 +967,11 @@ header .subtitle {
 .copyright a:hover {
   opacity: 0.8;
   text-decoration: underline;
+}
+
+.app-version {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'Monaco', 'Consolas', monospace;
+  opacity: 0.7;
 }
