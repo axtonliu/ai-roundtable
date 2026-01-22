@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AI 圆桌 中国版 - Multi-AI Roundtable CN",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "让多个 AI 助手围桌讨论，交叉评价，深度协作 - 中国版支持DeepSeek、Kimi、ChatGLM、通义千问等国产大模型",
 
   "permissions": [

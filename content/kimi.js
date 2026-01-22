@@ -131,25 +131,50 @@
         inputEl.dispatchEvent(new Event('change', { bubbles: true }));
         inputEl.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true }));
       } else {
-        // Contenteditable div
-        console.log('[AI Panel] Kimi: Setting text for contenteditable div');
-        console.log('[AI Panel] Kimi: Current content:', inputEl.innerHTML);
-        console.log('[AI Panel] Kimi: Text to set:', text);
+        // Contenteditable div - use Clipboard API for Lexical editor
+        console.log('[AI Panel] Kimi: Using Clipboard API for Lexical editor');
 
-        // Clear existing content
-        inputEl.innerHTML = '';
+        // Focus the input
+        inputEl.focus();
 
-        // Set new text
-        inputEl.textContent = text;
-        console.log('[AI Panel] Kimi: Text content set to:', inputEl.textContent);
+        // Use Clipboard API to paste text
+        if (navigator.clipboard && window.ClipboardItem) {
+          try {
+            // Copy text to clipboard
+            await navigator.clipboard.write([
+              new ClipboardItem({
+                'text/plain': new Blob([text], { type: 'text/plain' })
+              })
+            ]);
 
-        // Trigger various events
-        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-        inputEl.dispatchEvent(new Event('change', { bubbles: true }));
-        inputEl.dispatchEvent(new Event('keyup', { bubbles: true }));
-        inputEl.dispatchEvent(new Event('paste', { bubbles: true }));
+            console.log('[AI Panel] Kimi: Text copied to clipboard');
 
-        console.log('[AI Panel] Kimi: Events dispatched, new content:', inputEl.innerHTML);
+            // Trigger paste
+            await sleep(100);
+
+            // Execute paste command
+            const pasteEvent = new ClipboardEvent('paste', {
+              bubbles: true,
+              cancelable: true,
+              dataType: 'text/plain',
+              data: text
+            });
+
+            inputEl.dispatchEvent(pasteEvent);
+
+            // Also try document.execCommand as fallback
+            document.execCommand('paste');
+
+            console.log('[AI Panel] Kimi: Paste executed, content:', inputEl.innerHTML);
+          } catch (err) {
+            console.error('[AI Panel] Kimi: Clipboard error:', err);
+            // Fallback to manual typing simulation
+            await simulateTyping(inputEl, text);
+          }
+        } else {
+          // Fallback: simulate typing
+          await simulateTyping(inputEl, text);
+        }
       }
 
       // Small delay to let the UI process
@@ -368,5 +393,54 @@
 
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function simulateTyping(element, text) {
+    console.log('[AI Panel] Kimi: Simulating typing for text:', text);
+
+    // Focus the element
+    element.focus();
+    await sleep(50);
+
+    // Clear existing content
+    element.innerHTML = '';
+    await sleep(50);
+
+    // Type each character
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+
+      // Dispatch keydown event
+      element.dispatchEvent(new KeyboardEvent('keydown', {
+        key: char,
+        code: 'Key' + char.toUpperCase(),
+        keyCode: char.charCodeAt(0),
+        which: char.charCodeAt(0),
+        bubbles: true,
+        cancelable: true
+      }));
+
+      // Insert character
+      document.execCommand('insertText', false, char);
+
+      // Dispatch keyup event
+      element.dispatchEvent(new KeyboardEvent('keyup', {
+        key: char,
+        code: 'Key' + char.toUpperCase(),
+        keyCode: char.charCodeAt(0),
+        which: char.charCodeAt(0),
+        bubbles: true,
+        cancelable: true
+      }));
+
+      // Small delay between characters
+      await sleep(10);
+    }
+
+    // Dispatch input event after typing
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    element.dispatchEvent(new Event('change', { bubbles: true }));
+
+    console.log('[AI Panel] Kimi: Typing simulation complete, content:', element.innerHTML);
   }
 })();
