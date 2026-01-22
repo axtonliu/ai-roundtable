@@ -4,13 +4,14 @@
 const AI_URL_PATTERNS = {
   claude: ['claude.ai'],
   chatgpt: ['chat.openai.com', 'chatgpt.com'],
-  gemini: ['gemini.google.com']
+  gemini: ['gemini.google.com'],
+  deepseek: ['chat.deepseek.com']
 };
 
 // Store latest responses using chrome.storage.session (persists across service worker restarts)
 async function getStoredResponses() {
   const result = await chrome.storage.session.get('latestResponses');
-  return result.latestResponses || { claude: null, chatgpt: null, gemini: null };
+  return result.latestResponses || { claude: null, chatgpt: null, gemini: null, deepseek: null };
 }
 
 async function setStoredResponse(aiType, content) {

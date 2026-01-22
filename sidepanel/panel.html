@@ -9,8 +9,8 @@
 <body>
   <div class="container">
     <header>
-      <h1>AI 圆桌</h1>
-      <p class="subtitle">Multi-AI Roundtable</p>
+      <h1>AI 圆桌 中国版</h1>
+      <p class="subtitle">Multi-AI Roundtable 中国版 - 支持国产大模型</p>
     </header>
 
     <!-- Mode Switcher -->
@@ -37,6 +37,11 @@
         <span class="target-name gemini">Gemini</span>
         <span class="status" id="status-gemini">-</span>
       </label>
+      <label class="target-label">
+        <input type="checkbox" id="target-deepseek" checked>
+        <span class="target-name deepseek">DeepSeek</span>
+        <span class="status" id="status-deepseek">-</span>
+      </label>
     </section>
 
     <section class="input-section">
@@ -58,6 +63,7 @@
         <button class="mention-btn claude" data-mention="@Claude">Claude</button>
         <button class="mention-btn chatgpt" data-mention="@ChatGPT">ChatGPT</button>
         <button class="mention-btn gemini" data-mention="@Gemini">Gemini</button>
+        <button class="mention-btn deepseek" data-mention="@DeepSeek">DeepSeek</button>
       </div>
       <textarea
         id="message-input"
@@ -102,6 +108,10 @@
             <label class="participant-option">
               <input type="checkbox" name="participant" value="gemini">
               <span class="target-name gemini">Gemini</span>
+            </label>
+            <label class="participant-option">
+              <input type="checkbox" name="participant" value="deepseek">
+              <span class="target-name deepseek">DeepSeek</span>
             </label>
           </div>
           <p class="hint">请选择 2 位参与者</p>

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "AI 圆桌 - Multi-AI Roundtable",
-  "version": "0.1.5",
-  "description": "让多个 AI 助手围桌讨论，交叉评价，深度协作",
+  "name": "AI 圆桌 中国版 - Multi-AI Roundtable CN",
+  "version": "0.3.0",
+  "description": "让多个 AI 助手围桌讨论，交叉评价，深度协作 - 中国版支持DeepSeek等国产大模型",
 
   "permissions": [
     "sidePanel",
@@ -16,7 +16,8 @@
     "https://claude.ai/*",
     "https://chat.openai.com/*",
     "https://chatgpt.com/*",
-    "https://gemini.google.com/*"
+    "https://gemini.google.com/*",
+    "https://chat.deepseek.com/*"
   ],
 
   "side_panel": {
@@ -41,6 +42,11 @@
     {
       "matches": ["https://gemini.google.com/*"],
       "js": ["content/gemini.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://chat.deepseek.com/*"],
+      "js": ["content/deepseek.js"],
       "run_at": "document_idle"
     }
   ],
