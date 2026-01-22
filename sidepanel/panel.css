@@ -108,6 +108,23 @@ header .subtitle {
   color: #3b82f6;
 }
 
+/* Chinese AI Models Brand Colors */
+.target-name.deepseek {
+  color: #4D6BFE;
+}
+
+.target-name.kimi {
+  color: #1677FF;
+}
+
+.target-name.chatglm {
+  color: #52C41A;
+}
+
+.target-name.qwen {
+  color: #722ED1;
+}
+
 .status {
   font-size: 11px;
   padding: 2px 6px;
@@ -227,6 +244,39 @@ header .subtitle {
 .mention-btn.gemini:hover {
   background: rgba(59, 130, 246, 0.15);
   border-color: #3b82f6;
+}
+
+/* Chinese AI Models Brand Colors */
+.mention-btn.deepseek {
+  color: #4D6BFE;
+}
+.mention-btn.deepseek:hover {
+  background: rgba(77, 107, 254, 0.15);
+  border-color: #4D6BFE;
+}
+
+.mention-btn.kimi {
+  color: #1677FF;
+}
+.mention-btn.kimi:hover {
+  background: rgba(22, 119, 255, 0.15);
+  border-color: #1677FF;
+}
+
+.mention-btn.chatglm {
+  color: #52C41A;
+}
+.mention-btn.chatglm:hover {
+  background: rgba(82, 196, 26, 0.15);
+  border-color: #52C41A;
+}
+
+.mention-btn.qwen {
+  color: #722ED1;
+}
+.mention-btn.qwen:hover {
+  background: rgba(114, 46, 209, 0.15);
+  border-color: #722ED1;
 }
 
 #message-input {
@@ -806,6 +856,10 @@ header .subtitle {
 #summary-content .ai-name.claude { color: #d97706; }
 #summary-content .ai-name.chatgpt { color: #10b981; }
 #summary-content .ai-name.gemini { color: #3b82f6; }
+#summary-content .ai-name.deepseek { color: #4D6BFE; }
+#summary-content .ai-name.kimi { color: #1677FF; }
+#summary-content .ai-name.chatglm { color: #52C41A; }
+#summary-content .ai-name.qwen { color: #722ED1; }
 
 #new-discussion-btn {
   width: 100%;

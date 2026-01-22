@@ -9,8 +9,8 @@
 <body>
   <div class="container">
     <header>
-      <h1>AI 圆桌</h1>
-      <p class="subtitle">Multi-AI Roundtable</p>
+      <h1>AI 圆桌 中国版</h1>
+      <p class="subtitle">Multi-AI Roundtable 中国版 - 支持国产大模型</p>
     </header>
 
     <!-- Mode Switcher -->
@@ -23,17 +23,37 @@
     <div id="normal-mode">
       <section class="targets">
       <label class="target-label">
-        <input type="checkbox" id="target-claude" checked>
+        <input type="checkbox" id="target-deepseek" checked>
+        <span class="target-name deepseek">DeepSeek</span>
+        <span class="status" id="status-deepseek">-</span>
+      </label>
+      <label class="target-label">
+        <input type="checkbox" id="target-kimi" checked>
+        <span class="target-name kimi">Kimi</span>
+        <span class="status" id="status-kimi">-</span>
+      </label>
+      <label class="target-label">
+        <input type="checkbox" id="target-chatglm">
+        <span class="target-name chatglm">ChatGLM</span>
+        <span class="status" id="status-chatglm">-</span>
+      </label>
+      <label class="target-label">
+        <input type="checkbox" id="target-qwen">
+        <span class="target-name qwen">通义千问</span>
+        <span class="status" id="status-qwen">-</span>
+      </label>
+      <label class="target-label">
+        <input type="checkbox" id="target-claude">
         <span class="target-name claude">Claude</span>
         <span class="status" id="status-claude">-</span>
       </label>
       <label class="target-label">
-        <input type="checkbox" id="target-chatgpt" checked>
+        <input type="checkbox" id="target-chatgpt">
         <span class="target-name chatgpt">ChatGPT</span>
         <span class="status" id="status-chatgpt">-</span>
       </label>
       <label class="target-label">
-        <input type="checkbox" id="target-gemini" checked>
+        <input type="checkbox" id="target-gemini">
         <span class="target-name gemini">Gemini</span>
         <span class="status" id="status-gemini">-</span>
       </label>
@@ -55,6 +75,10 @@
       </div>
       <div class="mention-buttons">
         <span class="mention-label">@</span>
+        <button class="mention-btn deepseek" data-mention="@DeepSeek">DeepSeek</button>
+        <button class="mention-btn kimi" data-mention="@Kimi">Kimi</button>
+        <button class="mention-btn chatglm" data-mention="@ChatGLM">ChatGLM</button>
+        <button class="mention-btn qwen" data-mention="@Qwen">通义千问</button>
         <button class="mention-btn claude" data-mention="@Claude">Claude</button>
         <button class="mention-btn chatgpt" data-mention="@ChatGPT">ChatGPT</button>
         <button class="mention-btn gemini" data-mention="@Gemini">Gemini</button>
@@ -92,11 +116,27 @@
           <label>参与者：</label>
           <div class="participant-options">
             <label class="participant-option">
-              <input type="checkbox" name="participant" value="claude" checked>
+              <input type="checkbox" name="participant" value="deepseek" checked>
+              <span class="target-name deepseek">DeepSeek</span>
+            </label>
+            <label class="participant-option">
+              <input type="checkbox" name="participant" value="kimi" checked>
+              <span class="target-name kimi">Kimi</span>
+            </label>
+            <label class="participant-option">
+              <input type="checkbox" name="participant" value="chatglm">
+              <span class="target-name chatglm">ChatGLM</span>
+            </label>
+            <label class="participant-option">
+              <input type="checkbox" name="participant" value="qwen">
+              <span class="target-name qwen">通义千问</span>
+            </label>
+            <label class="participant-option">
+              <input type="checkbox" name="participant" value="claude">
               <span class="target-name claude">Claude</span>
             </label>
             <label class="participant-option">
-              <input type="checkbox" name="participant" value="chatgpt" checked>
+              <input type="checkbox" name="participant" value="chatgpt">
               <span class="target-name chatgpt">ChatGPT</span>
             </label>
             <label class="participant-option">
