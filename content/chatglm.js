@@ -153,29 +153,122 @@
   }
 
   async function clickSendButton(button) {
+    console.log('[AI Panel] ChatGLM: Attempting to click send button');
+    console.log('[AI Panel] ChatGLM: Button element:', button.tagName, button.className);
+
     // Try multiple methods to click the button
     try {
+      // If it's an SVG element, click its parent container
+      if (button.tagName === 'svg' || button.tagName === 'path') {
+        console.log('[AI Panel] ChatGLM: Found SVG element, clicking parent container');
+        const container = button.closest('[class*="button"]') || button.closest('button') || button.parentElement;
+        if (container) {
+          console.log('[AI Panel] ChatGLM: Clicking container:', container.className);
+
+          // Method 1: Click container
+          container.click();
+          await sleep(200);
+
+          // Method 2: Click SVG itself
+          button.click();
+          await sleep(100);
+
+          // Method 3: Mouse events on container
+          const rect = container.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+
+          container.dispatchEvent(new MouseEvent('mousedown', {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            clientX: centerX,
+            clientY: centerY,
+            button: 0,
+            buttons: 1
+          }));
+          await sleep(50);
+          container.dispatchEvent(new MouseEvent('mouseup', {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            clientX: centerX,
+            clientY: centerY,
+            button: 0,
+            buttons: 0
+          }));
+          await sleep(50);
+          container.dispatchEvent(new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            clientX: centerX,
+            clientY: centerY,
+            button: 0
+          }));
+
+          console.log('[AI Panel] ChatGLM: Container click methods executed');
+          return;
+        }
+      }
+
+      // Standard button click
+      console.log('[AI Panel] ChatGLM: Trying standard click methods');
+
       // Method 1: Standard click
       button.click();
-      await sleep(100);
+      await sleep(200);
 
       // Method 2: Mouse events
-      const mouseDown = new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window });
-      const mouseUp = new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window });
-      const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+      const rect = button.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const mouseDown = new MouseEvent('mousedown', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        clientX: centerX,
+        clientY: centerY,
+        button: 0,
+        buttons: 1
+      });
+      const mouseUp = new MouseEvent('mouseup', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        clientX: centerX,
+        clientY: centerY,
+        button: 0,
+        buttons: 0
+      });
+      const clickEvent = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        clientX: centerX,
+        clientY: centerY,
+        button: 0
+      });
 
       button.dispatchEvent(mouseDown);
       await sleep(50);
       button.dispatchEvent(mouseUp);
       await sleep(50);
       button.dispatchEvent(clickEvent);
+
+      console.log('[AI Panel] ChatGLM: All click methods executed');
     } catch (err) {
-      console.error('[AI Panel] ChatGLM: Click error, may need manual click');
+      console.error('[AI Panel] ChatGLM: Click error:', err);
       // Highlight button if click fails
-      button.style.boxShadow = '0 0 10px 3px rgba(66, 153, 225, 0.6)';
-      setTimeout(() => {
-        button.style.boxShadow = '';
-      }, 3000);
+      const buttonToHighlight = button.tagName === 'svg' ? button.parentElement : button;
+      if (buttonToHighlight) {
+        buttonToHighlight.style.boxShadow = '0 0 10px 3px rgba(66, 153, 225, 0.6)';
+        buttonToHighlight.style.transition = 'box-shadow 0.3s';
+        setTimeout(() => {
+          buttonToHighlight.style.boxShadow = '';
+        }, 3000);
+      }
     }
   }
 
@@ -189,33 +282,44 @@
       'button[class*="send"]',
       'button[class*="submit"]',
       'div[role="button"][class*="send"]',
-      'button:has(svg)'
+      'button:has(svg)',
+      'svg[class*="send"]'
     ];
+
+    console.log('[AI Panel] ChatGLM: Searching for send button...');
 
     for (const selector of selectors) {
       const btn = document.querySelector(selector);
+      console.log(`[AI Panel] ChatGLM: Testing selector "${selector}":`, btn ? 'Found' : 'Not found');
       if (btn && isVisible(btn)) {
+        console.log('[AI Panel] ChatGLM: Found send button with selector:', selector);
         return btn;
       }
     }
 
     // Fallback: try to find any button that looks like a send button
-    const buttons = Array.from(document.querySelectorAll('button, div[role="button"]'));
+    const buttons = Array.from(document.querySelectorAll('button, div[role="button"], svg[class*="send"]'));
+
+    console.log(`[AI Panel] ChatGLM: Found ${buttons.length} potential button elements`);
 
     for (const btn of buttons) {
       const text = btn.textContent?.toLowerCase() || '';
       const className = btn.className?.toLowerCase() || '';
+
+      console.log('[AI Panel] ChatGLM: Checking button - text:', text, 'class:', className);
 
       if (text.includes('send') || text.includes('发送') ||
           text.includes('提交') || text === '' ||
           className.includes('send') || className.includes('submit') ||
           className.includes('icon') || className.includes('button')) {
         if (isVisible(btn)) {
+          console.log('[AI Panel] ChatGLM: Found potential send button:', className);
           return btn;
         }
       }
     }
 
+    console.error('[AI Panel] ChatGLM: No send button found!');
     return null;
   }
 
