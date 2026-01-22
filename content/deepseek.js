@@ -207,219 +207,202 @@
 
   async function tryClickSendButton(button) {
     console.log('[AI Panel] DeepSeek: Attempting auto-click...');
+    console.log('[AI Panel] DeepSeek: Button element:', button);
+    console.log('[AI Panel] DeepSeek: Button classes:', button.className);
+    console.log('[AI Panel] DeepSeek: Button attributes:', {
+      role: button.getAttribute('role'),
+      tabindex: button.getAttribute('tabindex'),
+      'aria-disabled': button.getAttribute('aria-disabled')
+    });
 
-    // Method 1: Focus + Enter key (since it has tabindex="0")
+    // Debug: Try to find React internal properties
+    console.log('[AI Panel] DeepSeek: Searching for React internal props...');
+    const reactKeys = Object.keys(button).filter(key =>
+      key.startsWith('__react') ||
+      key.startsWith('_react') ||
+      key.includes('react') ||
+      key.includes('fiber')
+    );
+    console.log('[AI Panel] DeepSeek: Found React keys:', reactKeys);
+
+    // Method 1: Try to access React onClick handler directly
     try {
-      button.focus();
-      await sleep(50);
+      for (const key of reactKeys) {
+        const props = button[key];
+        console.log('[AI Panel] DeepSeek: Checking key:', key, 'Type:', typeof props);
 
-      // Try Enter key
-      button.dispatchEvent(new KeyboardEvent('keydown', {
-        key: 'Enter',
-        code: 'Enter',
-        keyCode: 13,
-        which: 13,
-        bubbles: true,
-        cancelable: true
-      }));
-      await sleep(50);
-
-      button.dispatchEvent(new KeyboardEvent('keyup', {
-        key: 'Enter',
-        code: 'Enter',
-        keyCode: 13,
-        which: 13,
-        bubbles: true,
-        cancelable: true
-      }));
-      await sleep(100);
-
-      button.dispatchEvent(new KeyboardEvent('keypress', {
-        key: 'Enter',
-        code: 'Enter',
-        keyCode: 13,
-        which: 13,
-        bubbles: true,
-        cancelable: true
-      }));
-      await sleep(200);
-
-      console.log('[AI Panel] DeepSeek: Method 1 (Enter key) executed');
+        if (props && typeof props === 'object') {
+          // Try to find onClick or onDoubleClick
+          if (props.onClick) {
+            console.log('[AI Panel] DeepSeek: Found onClick handler!', props.onClick);
+            props.onClick({ preventDefault: () => {}, stopPropagation: () => {} });
+            await sleep(200);
+          }
+          if (props.onDoubleClick) {
+            console.log('[AI Panel] DeepSeek: Found onDoubleClick handler!');
+            props.onDoubleClick({ preventDefault: () => {}, stopPropagation: () => {} });
+            await sleep(200);
+          }
+        }
+      }
+      console.log('[AI Panel] DeepSeek: Method 1 (React props) attempted');
     } catch (e) {
       console.error('[AI Panel] DeepSeek: Method 1 error:', e);
     }
 
-    // Method 2: Space key (another common activation key)
+    // Method 2: Try accessing fiber node
     try {
-      button.focus();
-      await sleep(50);
+      const fiberKey = reactKeys.find(k => k.includes('fiber'));
+      if (fiberKey) {
+        const fiber = button[fiberKey];
+        console.log('[AI Panel] DeepSeek: Found fiber node');
 
-      button.dispatchEvent(new KeyboardEvent('keydown', {
-        key: ' ',
-        code: 'Space',
-        keyCode: 32,
-        which: 32,
-        bubbles: true,
-        cancelable: true
-      }));
-      await sleep(50);
-
-      button.dispatchEvent(new KeyboardEvent('keyup', {
-        key: ' ',
-        code: 'Space',
-        keyCode: 32,
-        which: 32,
-        bubbles: true,
-        cancelable: true
-      }));
-      await sleep(200);
-
-      console.log('[AI Panel] DeepSeek: Method 2 (Space key) executed');
+        // Try to traverse fiber tree to find event handlers
+        let current = fiber;
+        while (current) {
+          if (current.pendingProps && current.pendingProps.onClick) {
+            console.log('[AI Panel] DeepSeek: Found onClick in fiber!');
+            current.pendingProps.onClick({ preventDefault: () => {}, stopPropagation: () => {} });
+            await sleep(200);
+            break;
+          }
+          current = current.return;
+        }
+      }
+      console.log('[AI Panel] DeepSeek: Method 2 (Fiber traversal) attempted');
     } catch (e) {
       console.error('[AI Panel] DeepSeek: Method 2 error:', e);
     }
 
-    // Method 3: Standard click
+    // Method 3: Focus + Enter key (since it has tabindex="0")
     try {
-      button.click();
+      button.focus();
+      await sleep(50);
+
+      // Try Enter key with isTrusted flag simulation
+      const enterEvent = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+        bubbles: true,
+        cancelable: true,
+        composed: true
+      });
+
+      // Try to make the event trusted
+      Object.defineProperty(enterEvent, 'isTrusted', {
+        get: () => true,
+        configurable: true
+      });
+
+      button.dispatchEvent(enterEvent);
+      await sleep(50);
+
+      button.dispatchEvent(new KeyboardEvent('keyup', {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+        bubbles: true,
+        cancelable: true,
+        composed: true
+      }));
       await sleep(200);
-      console.log('[AI Panel] DeepSeek: Method 3 (click()) executed');
+
+      console.log('[AI Panel] DeepSeek: Method 3 (Enter key) executed');
     } catch (e) {
       console.error('[AI Panel] DeepSeek: Method 3 error:', e);
     }
 
-    // Method 4: Complete mouse event sequence
+    // Method 4: Try clicking on parent or child elements
     try {
-      const rect = button.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
+      const parent = button.parentElement;
+      if (parent) {
+        console.log('[AI Panel] DeepSeek: Attempting parent click');
+        parent.click();
+        await sleep(200);
+      }
 
-      // Mouse enter
-      button.dispatchEvent(new MouseEvent('mouseenter', {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-        clientX: centerX,
-        clientY: centerY
-      }));
-      await sleep(20);
+      const children = button.querySelectorAll('*');
+      console.log('[AI Panel] DeepSeek: Found', children.length, 'child elements');
 
-      // Mouse over
-      button.dispatchEvent(new MouseEvent('mouseover', {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-        clientX: centerX,
-        clientY: centerY
-      }));
-      await sleep(20);
-
-      // Mouse move
-      button.dispatchEvent(new MouseEvent('mousemove', {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-        clientX: centerX,
-        clientY: centerY
-      }));
-      await sleep(20);
-
-      // Mouse down
-      button.dispatchEvent(new MouseEvent('mousedown', {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-        clientX: centerX,
-        clientY: centerY,
-        button: 0,
-        buttons: 1
-      }));
-      await sleep(30);
-
-      // Focus
-      button.focus();
-      await sleep(20);
-
-      // Mouse up
-      button.dispatchEvent(new MouseEvent('mouseup', {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-        clientX: centerX,
-        clientY: centerY,
-        button: 0,
-        buttons: 0
-      }));
-      await sleep(30);
-
-      // Click
-      button.dispatchEvent(new MouseEvent('click', {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-        clientX: centerX,
-        clientY: centerY,
-        button: 0,
-        detail: 1
-      }));
-      await sleep(100);
-
-      console.log('[AI Panel] DeepSeek: Method 4 (full mouse sequence) executed');
+      for (const child of children) {
+        if (child.tagName === 'DIV' || child.tagName === 'svg') {
+          child.click();
+          await sleep(50);
+        }
+      }
+      console.log('[AI Panel] DeepSeek: Method 4 (parent/children click) executed');
     } catch (e) {
       console.error('[AI Panel] DeepSeek: Method 4 error:', e);
     }
 
-    // Method 5: Try clicking inner SVG
+    // Method 5: Standard click
     try {
-      const svg = button.querySelector('svg');
-      if (svg) {
-        svg.click();
-        await sleep(200);
-        console.log('[AI Panel] DeepSeek: Method 5 (SVG click) executed');
-      }
+      button.click();
+      await sleep(200);
+      console.log('[AI Panel] DeepSeek: Method 5 (click()) executed');
     } catch (e) {
       console.error('[AI Panel] DeepSeek: Method 5 error:', e);
     }
 
-    // Method 6: Try using MouseEvent with pointer events
+    // Method 6: Complete mouse event sequence with isTrusted
     try {
       const rect = button.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
 
-      button.dispatchEvent(new PointerEvent('pointerdown', {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-        clientX: centerX,
-        clientY: centerY,
-        button: 0,
-        buttons: 1,
-        pointerId: 1,
-        pointerType: 'mouse'
-      }));
+      const createMouseEvent = (type) => {
+        const event = new MouseEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          clientX: centerX,
+          clientY: centerY,
+          button: 0,
+          detail: 1,
+          composed: true
+        });
+        Object.defineProperty(event, 'isTrusted', {
+          get: () => true,
+          configurable: true
+        });
+        return event;
+      };
+
+      button.dispatchEvent(createMouseEvent('mousedown'));
       await sleep(50);
 
-      button.dispatchEvent(new PointerEvent('pointerup', {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-        clientX: centerX,
-        clientY: centerY,
-        button: 0,
-        buttons: 0,
-        pointerId: 1,
-        pointerType: 'mouse'
-      }));
+      button.focus();
+      await sleep(20);
+
+      button.dispatchEvent(createMouseEvent('mouseup'));
       await sleep(50);
 
-      console.log('[AI Panel] DeepSeek: Method 6 (pointer events) executed');
+      button.dispatchEvent(createMouseEvent('click'));
+      await sleep(100);
+
+      console.log('[AI Panel] DeepSeek: Method 6 (mouse with isTrusted) executed');
     } catch (e) {
       console.error('[AI Panel] DeepSeek: Method 6 error:', e);
     }
 
+    // Method 7: Try to trigger click via Accessibility API
+    try {
+      if (typeof button.click === 'function') {
+        button.click();
+      }
+      // Try calling the click method from HTMLElement prototype
+      HTMLElement.prototype.click.call(button);
+      await sleep(200);
+      console.log('[AI Panel] DeepSeek: Method 7 (HTMLElement click) executed');
+    } catch (e) {
+      console.error('[AI Panel] DeepSeek: Method 7 error:', e);
+    }
+
     console.log('[AI Panel] DeepSeek: All click methods attempted');
-    return false;  // Return success status if we can detect it
+    return false;
   }
 
   function setupResponseObserver() {
