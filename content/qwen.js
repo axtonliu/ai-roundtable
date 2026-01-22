@@ -80,6 +80,8 @@
         'textarea[placeholder*="Message"]',
         'textarea[placeholder*="问通义"]',
         'textarea[placeholder*="和千问"]',
+        'textarea[placeholder*="向通义提问"]',
+        'textarea[placeholder*="发给通义千问"]',
         'textarea[class*="input"]',
         'textarea[class*="textarea"]',
         'div[contenteditable="true"]',
@@ -87,9 +89,17 @@
       ];
 
       let inputEl = null;
+      let foundSelector = null;
+
+      console.log('[AI Panel] Qwen: Searching for input box...');
+
       for (const selector of inputSelectors) {
-        inputEl = document.querySelector(selector);
-        if (inputEl && isVisible(inputEl)) {
+        const el = document.querySelector(selector);
+        console.log(`[AI Panel] Qwen: Testing selector "${selector}":`, el ? 'Found' : 'Not found');
+        if (el && isVisible(el)) {
+          inputEl = el;
+          foundSelector = selector;
+          console.log('[AI Panel] Qwen: Input box found with selector:', foundSelector);
           break;
         }
       }

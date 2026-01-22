@@ -8,7 +8,7 @@ const AI_URL_PATTERNS = {
   deepseek: ['chat.deepseek.com'],
   kimi: ['kimi.moonshot.cn', 'www.kimi.com'],
   chatglm: ['chatglm.cn'],
-  qwen: ['tongyi.aliyun.com']
+  qwen: ['tongyi.aliyun.com', 'www.qianwen.com']
 };
 
 // Store latest responses using chrome.storage.session (persists across service worker restarts)

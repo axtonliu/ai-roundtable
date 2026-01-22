@@ -158,7 +158,7 @@ function getAITypeFromUrl(url) {
   if (url.includes('chat.deepseek.com')) return 'deepseek';
   if (url.includes('kimi.moonshot.cn') || url.includes('kimi.com')) return 'kimi';
   if (url.includes('chatglm.cn')) return 'chatglm';
-  if (url.includes('tongyi.aliyun.com')) return 'qwen';
+  if (url.includes('tongyi.aliyun.com') || url.includes('qianwen.com')) return 'qwen';
   return null;
 }
 
