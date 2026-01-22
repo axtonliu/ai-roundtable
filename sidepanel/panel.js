@@ -1,6 +1,17 @@
 // AI Panel - Side Panel Controller
 
-const AI_TYPES = ['claude', 'chatgpt', 'gemini'];
+const AI_TYPES = ['claude', 'chatgpt', 'gemini', 'deepseek', 'kimi', 'chatglm', 'qwen'];
+
+// AI Platform URLs
+const AI_URLS = {
+  claude: 'https://claude.ai',
+  chatgpt: 'https://chatgpt.com',
+  gemini: 'https://gemini.google.com',
+  deepseek: 'https://chat.deepseek.com',
+  kimi: 'https://kimi.moonshot.cn',
+  chatglm: 'https://chatglm.cn',
+  qwen: 'https://tongyi.aliyun.com'
+};
 
 // Cross-reference action keywords (inserted into message)
 const CROSS_REF_ACTIONS = {
@@ -20,8 +31,15 @@ const logContainer = document.getElementById('log-container');
 const connectedTabs = {
   claude: null,
   chatgpt: null,
-  gemini: null
+  gemini: null,
+  deepseek: null,
+  kimi: null,
+  chatglm: null,
+  qwen: null
 };
+
+// Track which tab is connected to which AI (tabId -> aiType)
+const tabToAiMap = new Map();
 
 // Discussion Mode State
 let discussionState = {
@@ -40,7 +58,18 @@ document.addEventListener('DOMContentLoaded', () => {
   checkConnectedTabs();
   setupEventListeners();
   setupDiscussionMode();
+  setupConnectButtons();
+  setupTabListener();
+  loadVersion();
 });
+
+function loadVersion() {
+  const manifest = chrome.runtime.getManifest();
+  const versionEl = document.getElementById('app-version');
+  if (versionEl && manifest.version) {
+    versionEl.textContent = `v${manifest.version}`;
+  }
+}
 
 function setupEventListeners() {
   sendBtn.addEventListener('click', handleSend);
@@ -151,6 +180,10 @@ function getAITypeFromUrl(url) {
   if (url.includes('claude.ai')) return 'claude';
   if (url.includes('chat.openai.com') || url.includes('chatgpt.com')) return 'chatgpt';
   if (url.includes('gemini.google.com')) return 'gemini';
+  if (url.includes('chat.deepseek.com')) return 'deepseek';
+  if (url.includes('kimi.moonshot.cn') || url.includes('kimi.com')) return 'kimi';
+  if (url.includes('chatglm.cn')) return 'chatglm';
+  if (url.includes('tongyi.aliyun.com') || url.includes('qianwen.com')) return 'qwen';
   return null;
 }
 
@@ -253,7 +286,7 @@ function parseMessage(message) {
     const afterArrow = message.substring(arrowIndex + 2).trim();  // Skip "<-"
 
     // Extract targets (before arrow)
-    const mentionPattern = /@(claude|chatgpt|gemini)/gi;
+    const mentionPattern = /@(claude|chatgpt|gemini|deepseek|kimi|chatglm|qwen)/gi;
     const targetMatches = [...beforeArrow.matchAll(mentionPattern)];
     const targetAIs = [...new Set(targetMatches.map(m => m[1].toLowerCase()))];
 
@@ -283,7 +316,7 @@ function parseMessage(message) {
   }
 
   // Pattern-based detection for @ mentions
-  const mentionPattern = /@(claude|chatgpt|gemini)/gi;
+  const mentionPattern = /@(claude|chatgpt|gemini|deepseek)/gi;
   const matches = [...message.matchAll(mentionPattern)];
   const mentions = [...new Set(matches.map(m => m[1].toLowerCase()))];
 
@@ -821,4 +854,157 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// ============================================
+// Connection Button Functions
+// ============================================
+
+function setupConnectButtons() {
+  // Add click event listeners to all connect buttons
+  document.querySelectorAll('.connect-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const aiType = btn.dataset.ai;
+      if (!aiType) return;
+
+      // Check if already connected
+      if (btn.classList.contains('connected')) {
+        return;
+      }
+
+      // Set button to connecting state
+      btn.classList.add('connecting');
+      btn.textContent = '⏳ 连接中...';
+
+      try {
+        // Open AI platform in new tab
+        await chrome.tabs.create({
+          url: AI_URLS[aiType],
+          active: false  // Don't switch to the new tab immediately
+        });
+
+        log(`正在打开 ${capitalize(aiType)}...`, 'info');
+
+        // Check connection status after a delay
+        setTimeout(async () => {
+          await checkConnectedTabs();
+
+          // Check if connection was successful
+          const isConnected = connectedTabs[aiType];
+          if (!isConnected) {
+            // Still not connected, reset button
+            btn.classList.remove('connecting');
+            btn.textContent = '🔗 连接';
+            log(`${capitalize(aiType)} 已打开，请登录并在页面加载完成后刷新`, 'info');
+          }
+        }, 3000);
+
+      } catch (err) {
+        log(`无法打开 ${capitalize(aiType)}: ${err.message}`, 'error');
+        btn.classList.remove('connecting');
+        btn.textContent = '🔗 连接';
+      }
+    });
+  });
+}
+
+function setupTabListener() {
+  // Listen for tab updates to automatically detect AI connections
+  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    // Only care when page is fully loaded
+    if (changeInfo.status === 'complete' && tab.url) {
+      const aiType = getAITypeFromUrl(tab.url);
+
+      // Check if this tab was previously connected to a different AI
+      const previousAiType = tabToAiMap.get(tabId);
+
+      if (previousAiType && previousAiType !== aiType) {
+        // Tab navigated from one AI to another, clear old connection
+        updateTabStatus(previousAiType, false);
+        log(`${capitalize(previousAiType)} 连接已断开（标签页导航）`, 'info');
+      }
+
+      if (aiType) {
+        // Update connection status and tab mapping
+        updateTabStatus(aiType, true);
+        tabToAiMap.set(tabId, aiType);
+        log(`${capitalize(aiType)} 已连接`, 'success');
+
+        // Hide user hint when at least one AI is connected
+        checkUserHint();
+      }
+    }
+  });
+
+  // Listen for tab activation (user switches tabs)
+  chrome.tabs.onActivated.addListener(async (activeInfo) => {
+    try {
+      const tab = await chrome.tabs.get(activeInfo.tabId);
+      if (tab.url) {
+        const aiType = getAITypeFromUrl(tab.url);
+        if (aiType) {
+          updateTabStatus(aiType, true);
+          tabToAiMap.set(activeInfo.tabId, aiType);
+          checkUserHint();
+        }
+      }
+    } catch (err) {
+      // Tab might be closed, ignore error
+    }
+  });
+
+  // Listen for tab removal (tab closed) - update connection status
+  chrome.tabs.onRemoved.addListener(async (tabId) => {
+    // Check if this tab was connected to an AI
+    const aiType = tabToAiMap.get(tabId);
+    if (aiType) {
+      // Remove from mapping
+      tabToAiMap.delete(tabId);
+
+      // Check if this AI has any other connected tabs
+      const stillConnected = Array.from(tabToAiMap.values()).includes(aiType);
+
+      if (!stillConnected) {
+        // No other tabs for this AI, update status to disconnected
+        updateTabStatus(aiType, false);
+        log(`${capitalize(aiType)} 连接已断开（标签页已关闭）`, 'info');
+      }
+    }
+
+    // Update user hint visibility
+    checkUserHint();
+  });
+}
+
+function updateTabStatus(aiType, connected) {
+  const connectBtn = document.getElementById(`connect-${aiType}`);
+  if (connectBtn) {
+    if (connected) {
+      connectBtn.textContent = '✅ 已连接';
+      connectBtn.classList.remove('connecting');
+      connectBtn.classList.add('connected');
+    } else {
+      connectBtn.textContent = '🔗 连接';
+      connectBtn.classList.remove('connecting', 'connected');
+    }
+  }
+
+  // Store connection state
+  if (connected) {
+    connectedTabs[aiType] = true;
+  } else {
+    delete connectedTabs[aiType];
+  }
+}
+
+function checkUserHint() {
+  // Hide hint if at least one AI is connected
+  const hasConnected = tabToAiMap.size > 0;
+  const hintEl = document.getElementById('user-hint');
+  if (hintEl) {
+    hintEl.style.display = hasConnected ? 'none' : 'block';
+  }
 }

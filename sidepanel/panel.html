@@ -9,8 +9,8 @@
 <body>
   <div class="container">
     <header>
-      <h1>AI 圆桌</h1>
-      <p class="subtitle">Multi-AI Roundtable</p>
+      <h1>AI 圆桌 中国版</h1>
+      <p class="subtitle">Multi-AI Roundtable 中国版 - 支持国产大模型</p>
     </header>
 
     <!-- Mode Switcher -->
@@ -21,21 +21,46 @@
 
     <!-- Normal Mode Content -->
     <div id="normal-mode">
+      <!-- New user hint -->
+      <div class="user-hint" id="user-hint">
+        💡 <strong>首次使用？</strong>点击下方的"连接"按钮打开AI平台
+      </div>
+
       <section class="targets">
       <label class="target-label">
-        <input type="checkbox" id="target-claude" checked>
+        <input type="checkbox" id="target-deepseek" checked>
+        <span class="target-name deepseek">DeepSeek</span>
+        <button class="connect-btn" id="connect-deepseek" data-ai="deepseek">🔗 连接</button>
+      </label>
+      <label class="target-label">
+        <input type="checkbox" id="target-kimi" checked>
+        <span class="target-name kimi">Kimi</span>
+        <button class="connect-btn" id="connect-kimi" data-ai="kimi">🔗 连接</button>
+      </label>
+      <label class="target-label">
+        <input type="checkbox" id="target-chatglm">
+        <span class="target-name chatglm">ChatGLM</span>
+        <button class="connect-btn" id="connect-chatglm" data-ai="chatglm">🔗 连接</button>
+      </label>
+      <label class="target-label">
+        <input type="checkbox" id="target-qwen">
+        <span class="target-name qwen">通义千问</span>
+        <button class="connect-btn" id="connect-qwen" data-ai="qwen">🔗 连接</button>
+      </label>
+      <label class="target-label">
+        <input type="checkbox" id="target-claude">
         <span class="target-name claude">Claude</span>
-        <span class="status" id="status-claude">-</span>
+        <button class="connect-btn" id="connect-claude" data-ai="claude">🔗 连接</button>
       </label>
       <label class="target-label">
-        <input type="checkbox" id="target-chatgpt" checked>
+        <input type="checkbox" id="target-chatgpt">
         <span class="target-name chatgpt">ChatGPT</span>
-        <span class="status" id="status-chatgpt">-</span>
+        <button class="connect-btn" id="connect-chatgpt" data-ai="chatgpt">🔗 连接</button>
       </label>
       <label class="target-label">
-        <input type="checkbox" id="target-gemini" checked>
+        <input type="checkbox" id="target-gemini">
         <span class="target-name gemini">Gemini</span>
-        <span class="status" id="status-gemini">-</span>
+        <button class="connect-btn" id="connect-gemini" data-ai="gemini">🔗 连接</button>
       </label>
     </section>
 
@@ -55,6 +80,10 @@
       </div>
       <div class="mention-buttons">
         <span class="mention-label">@</span>
+        <button class="mention-btn deepseek" data-mention="@DeepSeek">DeepSeek</button>
+        <button class="mention-btn kimi" data-mention="@Kimi">Kimi</button>
+        <button class="mention-btn chatglm" data-mention="@ChatGLM">ChatGLM</button>
+        <button class="mention-btn qwen" data-mention="@Qwen">通义千问</button>
         <button class="mention-btn claude" data-mention="@Claude">Claude</button>
         <button class="mention-btn chatgpt" data-mention="@ChatGPT">ChatGPT</button>
         <button class="mention-btn gemini" data-mention="@Gemini">Gemini</button>
@@ -92,11 +121,27 @@
           <label>参与者：</label>
           <div class="participant-options">
             <label class="participant-option">
-              <input type="checkbox" name="participant" value="claude" checked>
+              <input type="checkbox" name="participant" value="deepseek" checked>
+              <span class="target-name deepseek">DeepSeek</span>
+            </label>
+            <label class="participant-option">
+              <input type="checkbox" name="participant" value="kimi" checked>
+              <span class="target-name kimi">Kimi</span>
+            </label>
+            <label class="participant-option">
+              <input type="checkbox" name="participant" value="chatglm">
+              <span class="target-name chatglm">ChatGLM</span>
+            </label>
+            <label class="participant-option">
+              <input type="checkbox" name="participant" value="qwen">
+              <span class="target-name qwen">通义千问</span>
+            </label>
+            <label class="participant-option">
+              <input type="checkbox" name="participant" value="claude">
               <span class="target-name claude">Claude</span>
             </label>
             <label class="participant-option">
-              <input type="checkbox" name="participant" value="chatgpt" checked>
+              <input type="checkbox" name="participant" value="chatgpt">
               <span class="target-name chatgpt">ChatGPT</span>
             </label>
             <label class="participant-option">
@@ -155,7 +200,8 @@
     </section>
 
     <footer class="copyright">
-      © AXTONLIU™ & AI 精英学院™
+      <div class="copyright-text">© AXTONLIU™ & AI 精英学院™</div>
+      <div class="app-version" id="app-version">v0.6.2</div>
     </footer>
   </div>
 

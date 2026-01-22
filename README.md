@@ -1,11 +1,14 @@
-# AI 圆桌 (AI Roundtable)
+# AI 圆桌 中国版 (AI Roundtable CN)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Status: Experimental](https://img.shields.io/badge/Status-Experimental-orange.svg)](#-experimental-prototype--实验性原型)
+[![Version](https://img.shields.io/badge/Version-0.5.4-brightgreen.svg)](https://github.com/firebear/ai-roundtable-cn)
+[![Status: Stable](https://img.shields.io/badge/Status-Stable-success.svg)](#-稳定版本)
 
-> 让多个 AI 助手围桌讨论，交叉评价，深度协作
+> 让多个 AI 助手围桌讨论，交叉评价，深度协作 - 支持7个主流AI平台
 
-一个 Chrome 扩展，让你像"会议主持人"一样，同时操控多个 AI（Claude、ChatGPT、Gemini），实现真正的 AI 圆桌会议。
+一个 Chrome 扩展，让你像"会议主持人"一样，同时操控多个 AI（Claude、ChatGPT、Gemini、DeepSeek、Kimi、ChatGLM、通义千问），实现真正的 AI 圆桌会议。
+
+**中国版特色**：完整支持4个国产大模型（DeepSeek、Kimi、ChatGLM、通义千问），让AI圆桌更适合中国用户。
 
 <!-- TODO: 添加 GIF 演示 -->
 <!-- ![Demo GIF](assets/demo.gif) -->
@@ -86,6 +89,20 @@ I'm currently most satisfied with, and calibrated to, the **web chat experience*
 - **交叉引用** - 让 Claude 评价 ChatGPT 的回答，或反过来
 - **讨论模式** - 两个 AI 就同一主题进行多轮深度讨论
 - **无需 API** - 直接操作网页界面，使用你现有的 AI 订阅
+- **国产大模型支持** - 新增DeepSeek等国产AI平台，更适合中国用户
+
+## 支持平台
+
+**国际AI**:
+- ✅ **Claude** - 完全自动化支持
+- ✅ **ChatGPT** - 完全自动化支持
+- ✅ **Gemini** - 完全自动化支持
+
+**国产AI**:
+- ✅ **DeepSeek** - 完全自动化支持（Enter键发送）
+- ✅ **Kimi** - 完全自动化支持（Clipboard API + 打字模拟）
+- ✅ **ChatGLM** - 完全自动化支持
+- ✅ **通义千问** - 完全自动化支持
 
 ---
 
@@ -129,11 +146,19 @@ I'm currently most satisfied with, and calibrated to, the **web chat experience*
 ### 准备工作
 
 1. 打开 Chrome，登录以下 AI 平台（根据需要）：
+
+   **国际AI**:
    - [Claude](https://claude.ai)
    - [ChatGPT](https://chatgpt.com)
    - [Gemini](https://gemini.google.com)
 
-2. 推荐使用 Chrome 的 Split Tab 功能，将 2 个 AI 页面并排显示
+   **国产AI** 🆕:
+   - [DeepSeek](https://chat.deepseek.com)
+   - [Kimi](https://kimi.moonshot.cn)
+   - [ChatGLM](https://chatglm.cn)
+   - [通义千问](https://tongyi.aliyun.com)
+
+2. 推荐使用 Chrome 的 Split Tab 功能，将 2-7 个 AI 页面并排显示
 
 3. 点击扩展图标，打开侧边栏控制台
 
@@ -144,13 +169,13 @@ I'm currently most satisfied with, and calibrated to, the **web chat experience*
 ### 普通模式
 
 **基本发送**
-1. 勾选要发送的目标 AI（Claude / ChatGPT / Gemini）
+1. 勾选要发送的目标 AI（默认：DeepSeek、Kimi）
 2. 输入消息
 3. 按 Enter 或点击「发送」按钮
 
 **@ 提及语法**
 - 点击 @ 按钮快速插入 AI 名称
-- 或手动输入：`@Claude 你怎么看这个问题？`
+- 或手动输入：`@Claude 你怎么看这个问题？`、`@DeepSeek 分析一下`、`@Kimi 你的观点呢？`
 
 **互评（推荐）**
 
@@ -207,7 +232,7 @@ I'm currently most satisfied with, and calibrated to, the **web chat experience*
 ## 技术架构
 
 ```
-ai-roundtable/
+ai-roundtable-cn/
 ├── manifest.json           # Chrome 扩展配置 (Manifest V3)
 ├── background.js           # Service Worker 消息中转
 ├── sidepanel/
@@ -217,7 +242,12 @@ ai-roundtable/
 ├── content/
 │   ├── claude.js          # Claude 页面注入脚本
 │   ├── chatgpt.js         # ChatGPT 页面注入脚本
-│   └── gemini.js          # Gemini 页面注入脚本
+│   ├── gemini.js          # Gemini 页面注入脚本
+│   ├── deepseek.js        # DeepSeek 页面注入脚本
+│   ├── kimi.js            # Kimi 页面注入脚本 🆕
+│   ├── chatglm.js         # ChatGLM 页面注入脚本 🆕
+│   └── qwen.js            # 通义千问页面注入脚本 🆕
+├── 版本日志.md             # 版本更新记录
 └── icons/                  # 扩展图标
 ```
 
@@ -274,17 +304,25 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Author
 
-**Axton Liu** - AI Educator & Creator
+**原项目**: [Axton Liu](https://github.com/axtonliu) - AI Educator & Creator
 
 - Website: [axtonliu.ai](https://www.axtonliu.ai)
 - YouTube: [@AxtonLiu](https://youtube.com/@AxtonLiu)
 - Twitter/X: [@axtonliu](https://twitter.com/axtonliu)
+- Learn More: [AI Elite Weekly Newsletter](https://www.axtonliu.ai/newsletters/ai-2)
 
-### Learn More
+**中国版 (Fork)**: [firebear](https://github.com/firebear)
 
-- [AI Elite Weekly Newsletter](https://www.axtonliu.ai/newsletters/ai-2) - Weekly AI insights
-- [Free AI Course](https://www.axtonliu.ai/axton-free-course) - Get started with AI
+- GitHub: [@firebear](https://github.com/firebear)
+- Repository: [AI Roundtable CN](https://github.com/firebear/ai-roundtable-cn)
+
+**中国版更新**:
+- 新增DeepSeek等国产大模型支持
+- 完善中文文档和使用指南
+- 优化中国用户体验
 
 ---
 
-© AXTONLIU™ & AI 精英学院™ 版权所有
+原项目 © AXTONLIU™ & AI 精英学院™ 版权所有
+
+中国版修改部分遵循相同MIT许可证
