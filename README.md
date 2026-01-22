@@ -1,7 +1,7 @@
 # AI 圆桌 中国版 (AI Roundtable CN)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/Version-0.5.0-brightgreen.svg)](https://github.com/firebear/ai-roundtable-cn)
+[![Version](https://img.shields.io/badge/Version-0.5.4-brightgreen.svg)](https://github.com/firebear/ai-roundtable-cn)
 [![Status: Stable](https://img.shields.io/badge/Status-Stable-success.svg)](#-稳定版本)
 
 > 让多个 AI 助手围桌讨论，交叉评价，深度协作 - 支持7个主流AI平台
@@ -99,7 +99,7 @@ I'm currently most satisfied with, and calibrated to, the **web chat experience*
 - ✅ **Gemini** - 完全自动化支持
 
 **国产AI**:
-- ✅ **DeepSeek** - 消息自动填入，需手动点击发送，响应自动捕获
+- ✅ **DeepSeek** - 完全自动化支持（Enter键发送）
 - ✅ **Kimi** - 完全自动化支持（Clipboard API + 打字模拟）
 - ✅ **ChatGLM** - 完全自动化支持
 - ✅ **通义千问** - 完全自动化支持
@@ -169,10 +169,9 @@ I'm currently most satisfied with, and calibrated to, the **web chat experience*
 ### 普通模式
 
 **基本发送**
-1. 勾选要发送的目标 AI（Claude / ChatGPT / Gemini / DeepSeek / Kimi / ChatGLM / 通义千问）
+1. 勾选要发送的目标 AI（默认：DeepSeek、Kimi）
 2. 输入消息
 3. 按 Enter 或点击「发送」按钮
-   - **DeepSeek用户注意**：消息会自动填入，发送按钮会高亮闪烁3秒，提示手动点击
 
 **@ 提及语法**
 - 点击 @ 按钮快速插入 AI 名称
@@ -275,9 +274,6 @@ ai-roundtable-cn/
 ### Q: ChatGPT 回复很长时会超时吗？
 **A:** 不会。系统支持最长 10 分钟的回复捕获。
 
-### Q: DeepSeek为什么需要手动点击发送？
-**A:** DeepSeek的发送按钮采用了特殊的事件处理机制，当前版本无法通过JavaScript自动触发。但响应捕获功能完全正常，只需手动点击一次发送按钮即可。我们会在未来版本中继续优化。
-
 ---
 
 ## 已知限制
@@ -285,7 +281,6 @@ ai-roundtable-cn/
 - 依赖各 AI 平台的 DOM 结构，平台更新可能导致功能失效
 - 讨论模式固定 2 个参与者
 - 不支持 Claude Artifacts、ChatGPT Canvas 等特殊功能
-- **DeepSeek需要手动点击发送按钮**（消息自动填入，按钮高亮提示，响应捕获正常）
 
 ---
 
