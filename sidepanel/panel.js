@@ -157,8 +157,9 @@ function getAITypeFromUrl(url) {
 function updateTabStatus(aiType, connected) {
   const statusEl = document.getElementById(`status-${aiType}`);
   if (statusEl) {
-    statusEl.textContent = connected ? 'Connected' : 'Not found';
+    // Status is now a dot indicator, no text needed
     statusEl.className = 'status ' + (connected ? 'connected' : 'disconnected');
+    statusEl.title = connected ? '已连接' : '未找到';
   }
   if (connected) {
     connectedTabs[aiType] = true;
