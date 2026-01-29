@@ -35,6 +35,13 @@
       return true;
     }
 
+    if (message.type === 'INJECT_FILES') {
+      injectFiles(message.files)
+        .then(() => sendResponse({ success: true }))
+        .catch(err => sendResponse({ success: false, error: err.message }));
+      return true;
+    }
+
     if (message.type === 'GET_LATEST_RESPONSE') {
       const response = getLatestResponse();
       sendResponse({ content: response });
@@ -307,6 +314,136 @@
     return style.display !== 'none' &&
            style.visibility !== 'hidden' &&
            style.opacity !== '0';
+  }
+
+  // File injection using DataTransfer API
+  async function injectFiles(filesData) {
+    console.log('[AI Panel] ChatGPT injecting files:', filesData.length);
+
+    // Convert base64 to File objects
+    const files = filesData.map(fileData => {
+      const byteCharacters = atob(fileData.base64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: fileData.type });
+      return new File([blob], fileData.name, { type: fileData.type });
+    });
+
+    // Find the file input
+    const fileInput = document.querySelector('input[type="file"]');
+
+    if (fileInput) {
+      const dataTransfer = new DataTransfer();
+      files.forEach(file => dataTransfer.items.add(file));
+      fileInput.files = dataTransfer.files;
+      fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+      console.log('[AI Panel] ChatGPT files injected via input');
+
+      // Wait for upload to complete
+      await waitForUploadComplete();
+      return true;
+    }
+
+    // Fallback: drag and drop
+    const dropZone = document.querySelector('#prompt-textarea') ||
+                     document.querySelector('[contenteditable="true"]') ||
+                     document.querySelector('form');
+
+    if (dropZone) {
+      const dataTransfer = new DataTransfer();
+      files.forEach(file => dataTransfer.items.add(file));
+
+      const events = ['dragenter', 'dragover', 'drop'];
+      for (const eventType of events) {
+        const event = new DragEvent(eventType, {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer: dataTransfer
+        });
+        dropZone.dispatchEvent(event);
+        await sleep(50);
+      }
+
+      console.log('[AI Panel] ChatGPT files injected via drop');
+      await waitForUploadComplete();
+      return true;
+    }
+
+    throw new Error('Could not find file input or drop zone');
+  }
+
+  // Wait for file upload to complete in ChatGPT
+  async function waitForUploadComplete() {
+    const maxWait = 30000; // 30 seconds max
+    const checkInterval = 300;
+    const startTime = Date.now();
+
+    console.log('[AI Panel] ChatGPT waiting for upload to complete...');
+
+    while (Date.now() - startTime < maxWait) {
+      await sleep(checkInterval);
+
+      // Check for upload progress indicators
+      const uploadingIndicators = [
+        // Progress bar or loading spinner
+        '[role="progressbar"]',
+        '[class*="uploading"]',
+        '[class*="loading"]',
+        // Circular progress
+        'circle[stroke-dasharray]',
+        // Any element with "uploading" text
+        '[aria-label*="uploading"]',
+        '[aria-label*="Uploading"]'
+      ];
+
+      let isUploading = false;
+      for (const selector of uploadingIndicators) {
+        const el = document.querySelector(selector);
+        if (el && isVisible(el)) {
+          isUploading = true;
+          break;
+        }
+      }
+
+      // Check if file preview/thumbnail appeared (upload complete indicator)
+      const filePreviewIndicators = [
+        // File attachment preview
+        '[data-testid="file-thumbnail"]',
+        '[class*="file-preview"]',
+        '[class*="attachment"]',
+        // Image preview
+        'img[alt*="Uploaded"]',
+        'img[src*="blob:"]'
+      ];
+
+      let hasPreview = false;
+      for (const selector of filePreviewIndicators) {
+        const el = document.querySelector(selector);
+        if (el && isVisible(el)) {
+          hasPreview = true;
+          break;
+        }
+      }
+
+      // If no longer uploading and has preview, we're done
+      if (!isUploading && hasPreview) {
+        console.log('[AI Panel] ChatGPT upload complete (preview detected)');
+        await sleep(300); // Small extra delay for UI to stabilize
+        return;
+      }
+
+      // If no uploading indicator and some time has passed, assume done
+      if (!isUploading && Date.now() - startTime > 2000) {
+        console.log('[AI Panel] ChatGPT upload assumed complete (no progress indicator)');
+        await sleep(300);
+        return;
+      }
+    }
+
+    console.log('[AI Panel] ChatGPT upload wait timeout');
   }
 
   console.log('[AI Panel] ChatGPT content script loaded');

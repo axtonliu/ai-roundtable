@@ -35,6 +35,20 @@
       return true;
     }
 
+    if (message.type === 'INJECT_FILES') {
+      console.log('[AI Panel] Gemini received INJECT_FILES message, files:', message.files?.length);
+      injectFiles(message.files)
+        .then(() => {
+          console.log('[AI Panel] Gemini injectFiles completed successfully');
+          sendResponse({ success: true });
+        })
+        .catch(err => {
+          console.log('[AI Panel] Gemini injectFiles failed:', err.message);
+          sendResponse({ success: false, error: err.message });
+        });
+      return true;
+    }
+
     if (message.type === 'GET_LATEST_RESPONSE') {
       const response = getLatestResponse();
       sendResponse({ content: response });
@@ -300,6 +314,78 @@
     return style.display !== 'none' &&
            style.visibility !== 'hidden' &&
            style.opacity !== '0';
+  }
+
+  // File injection for Gemini
+  // Note: Gemini has strict security measures and may not support programmatic file upload
+  async function injectFiles(filesData) {
+    console.log('[AI Panel] Gemini injecting files:', filesData.length);
+
+    // Convert base64 to File objects
+    const files = filesData.map(fileData => {
+      const byteCharacters = atob(fileData.base64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: fileData.type });
+      return new File([blob], fileData.name, { type: fileData.type });
+    });
+
+    // Find all file inputs
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    console.log('[AI Panel] Gemini found', fileInputs.length, 'file inputs');
+
+    if (fileInputs.length === 0) {
+      // Try to find and click the upload button to reveal file input
+      const uploadButtonSelectors = [
+        'button[aria-label*="Upload"]',
+        'button[aria-label*="upload"]',
+        'button[aria-label*="Add"]',
+        'button[aria-label*="Attach"]',
+        'button[aria-label*="image"]',
+        'button[aria-label*="file"]'
+      ];
+
+      for (const selector of uploadButtonSelectors) {
+        const btn = document.querySelector(selector);
+        if (btn && isVisible(btn)) {
+          console.log('[AI Panel] Gemini found upload button:', selector);
+          btn.click();
+          await sleep(500);
+          break;
+        }
+      }
+    }
+
+    // Try again after clicking button
+    const allInputs = document.querySelectorAll('input[type="file"]');
+    console.log('[AI Panel] Gemini file inputs after button click:', allInputs.length);
+
+    for (const fileInput of allInputs) {
+      try {
+        const dataTransfer = new DataTransfer();
+        files.forEach(file => dataTransfer.items.add(file));
+        fileInput.files = dataTransfer.files;
+
+        // Dispatch events
+        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+        fileInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+        console.log('[AI Panel] Gemini files set on input');
+        await sleep(1000);
+
+        // Check if upload was successful by looking for any new UI elements
+        return true;
+      } catch (e) {
+        console.log('[AI Panel] Gemini input injection error:', e.message);
+      }
+    }
+
+    // Gemini doesn't support programmatic file upload well
+    // Return error with helpful message
+    throw new Error('Gemini 暂不支持自动文件上传，请手动上传文件');
   }
 
   console.log('[AI Panel] Gemini content script loaded');

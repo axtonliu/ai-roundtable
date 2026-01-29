@@ -38,6 +38,9 @@ async function handleMessage(message, sender) {
     case 'SEND_MESSAGE':
       return await sendMessageToAI(message.aiType, message.message);
 
+    case 'SEND_FILES':
+      return await sendFilesToAI(message.aiType, message.files);
+
     case 'GET_RESPONSE':
       // Query content script directly for real-time response (not from storage)
       return await getResponseFromContentScript(message.aiType);
@@ -109,6 +112,31 @@ async function sendMessageToAI(aiType, message) {
 
     return response;
   } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+async function sendFilesToAI(aiType, files) {
+  console.log('[AI Panel] Background: sendFilesToAI called for', aiType, 'files:', files?.length);
+  try {
+    const tab = await findAITab(aiType);
+
+    if (!tab) {
+      console.log('[AI Panel] Background: No tab found for', aiType);
+      return { success: false, error: `No ${aiType} tab found` };
+    }
+
+    console.log('[AI Panel] Background: Sending INJECT_FILES to tab', tab.id);
+    // Send files to content script
+    const response = await chrome.tabs.sendMessage(tab.id, {
+      type: 'INJECT_FILES',
+      files
+    });
+
+    console.log('[AI Panel] Background: Response from content script:', response);
+    return response;
+  } catch (err) {
+    console.log('[AI Panel] Background: sendFilesToAI error:', err.message);
     return { success: false, error: err.message };
   }
 }

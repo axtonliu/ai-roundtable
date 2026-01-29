@@ -82,6 +82,7 @@ I'm currently most satisfied with, and calibrated to, the **web chat experience*
 
 - **统一控制台** - 通过 Chrome 侧边栏同时管理多个 AI
 - **多目标发送** - 一条消息同时发给多个 AI，对比回答
+- **文件上传** - 同时向多个 AI 发送图片或文档附件
 - **互评模式** - 让所有 AI 互相评价，对等参与（/mutual 命令）
 - **交叉引用** - 让 Claude 评价 ChatGPT 的回答，或反过来
 - **讨论模式** - 两个 AI 就同一主题进行多轮深度讨论
@@ -251,6 +252,7 @@ ai-roundtable/
 - 依赖各 AI 平台的 DOM 结构，平台更新可能导致功能失效
 - 讨论模式固定 2 个参与者
 - 不支持 Claude Artifacts、ChatGPT Canvas 等特殊功能
+- **Gemini 不支持自动文件上传** - 由于 Google 的安全限制，Gemini 需要手动上传文件（Claude 和 ChatGPT 正常支持）
 
 ---
 

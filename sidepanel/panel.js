@@ -15,6 +15,12 @@ const CROSS_REF_ACTIONS = {
 const messageInput = document.getElementById('message-input');
 const sendBtn = document.getElementById('send-btn');
 const logContainer = document.getElementById('log-container');
+const fileInput = document.getElementById('file-input');
+const addFileBtn = document.getElementById('add-file-btn');
+const fileList = document.getElementById('file-list');
+
+// Selected files storage
+let selectedFiles = [];
 
 // Track connected tabs
 const connectedTabs = {
@@ -40,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
   checkConnectedTabs();
   setupEventListeners();
   setupDiscussionMode();
+  setupFileUpload();
 });
 
 function setupEventListeners() {
@@ -195,6 +202,18 @@ async function handleSend() {
 
   // Clear input immediately after sending
   messageInput.value = '';
+
+  // Send files first if any
+  const filesToSend = [...selectedFiles];
+  if (filesToSend.length > 0) {
+    log(`正在上传 ${filesToSend.length} 个文件...`);
+    for (const target of targets) {
+      await sendFilesToAI(target, filesToSend);
+    }
+    clearFiles();
+    // Wait a bit for files to be processed before sending message
+    await new Promise(r => setTimeout(r, 500));
+  }
 
   try {
     // If mutual review, handle specially
@@ -822,4 +841,96 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// ============================================
+// File Upload Functions
+// ============================================
+
+function setupFileUpload() {
+  addFileBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach(file => addFile(file));
+    fileInput.value = ''; // Reset for next selection
+  });
+}
+
+function addFile(file) {
+  // Check file size (max 10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    log(`文件 ${file.name} 超过 10MB 限制`, 'error');
+    return;
+  }
+
+  // Check for duplicates
+  if (selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
+    return;
+  }
+
+  selectedFiles.push(file);
+  renderFileList();
+}
+
+function removeFile(index) {
+  selectedFiles.splice(index, 1);
+  renderFileList();
+}
+
+function renderFileList() {
+  fileList.innerHTML = '';
+
+  selectedFiles.forEach((file, index) => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.innerHTML = `
+      <span class="file-name" title="${file.name}">${file.name}</span>
+      <button class="remove-file" title="移除">&times;</button>
+    `;
+    item.querySelector('.remove-file').addEventListener('click', () => removeFile(index));
+    fileList.appendChild(item);
+  });
+}
+
+function clearFiles() {
+  selectedFiles = [];
+  renderFileList();
+}
+
+async function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result.split(',')[1];
+      resolve({
+        name: file.name,
+        type: file.type || 'application/octet-stream',
+        size: file.size,
+        base64
+      });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function sendFilesToAI(aiType, files) {
+  log(`${aiType}: 准备上传 ${files.length} 个文件...`);
+  const fileDataArray = await Promise.all(files.map(readFileAsBase64));
+  log(`${aiType}: 文件已编码，正在发送...`);
+
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage(
+      { type: 'SEND_FILES', aiType, files: fileDataArray },
+      (response) => {
+        if (response?.success) {
+          log(`${aiType}: 文件上传成功 (${files.length} 个)`, 'success');
+        } else {
+          log(`${aiType}: 文件上传失败 - ${response?.error || 'Unknown'}`, 'error');
+        }
+        resolve(response);
+      }
+    );
+  });
 }

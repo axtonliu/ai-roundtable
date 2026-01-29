@@ -35,6 +35,13 @@
       return true;
     }
 
+    if (message.type === 'INJECT_FILES') {
+      injectFiles(message.files)
+        .then(() => sendResponse({ success: true }))
+        .catch(err => sendResponse({ success: false, error: err.message }));
+      return true;
+    }
+
     if (message.type === 'GET_LATEST_RESPONSE') {
       const response = getLatestResponse();
       sendResponse({ content: response });
@@ -298,6 +305,62 @@
     return style.display !== 'none' &&
            style.visibility !== 'hidden' &&
            style.opacity !== '0';
+  }
+
+  // File injection using DataTransfer API
+  async function injectFiles(filesData) {
+    console.log('[AI Panel] Claude injecting files:', filesData.length);
+
+    // Convert base64 to File objects
+    const files = filesData.map(fileData => {
+      const byteCharacters = atob(fileData.base64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: fileData.type });
+      return new File([blob], fileData.name, { type: fileData.type });
+    });
+
+    // Find the file input
+    const fileInput = document.querySelector('input[type="file"]');
+
+    if (fileInput) {
+      const dataTransfer = new DataTransfer();
+      files.forEach(file => dataTransfer.items.add(file));
+      fileInput.files = dataTransfer.files;
+      fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+      console.log('[AI Panel] Claude files injected via input');
+      await sleep(500);
+      return true;
+    }
+
+    // Fallback: drag and drop on input area
+    const dropZone = document.querySelector('div.ProseMirror[contenteditable="true"]') ||
+                     document.querySelector('[contenteditable="true"]');
+
+    if (dropZone) {
+      const dataTransfer = new DataTransfer();
+      files.forEach(file => dataTransfer.items.add(file));
+
+      const events = ['dragenter', 'dragover', 'drop'];
+      for (const eventType of events) {
+        const event = new DragEvent(eventType, {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer: dataTransfer
+        });
+        dropZone.dispatchEvent(event);
+        await sleep(50);
+      }
+
+      console.log('[AI Panel] Claude files injected via drop');
+      await sleep(500);
+      return true;
+    }
+
+    throw new Error('Could not find file input or drop zone');
   }
 
   console.log('[AI Panel] Claude content script loaded');
