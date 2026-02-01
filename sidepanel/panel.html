@@ -15,8 +15,21 @@
 
     <!-- Mode Switcher -->
     <section class="mode-switcher">
-      <button class="mode-btn active" id="mode-normal">普通</button>
-      <button class="mode-btn" id="mode-discussion">讨论</button>
+      <button class="mode-btn active" id="mode-normal">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        普通
+      </button>
+      <button class="mode-btn" id="mode-discussion">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        讨论
+      </button>
     </section>
 
     <!-- Normal Mode Content -->
@@ -40,42 +53,50 @@
     </section>
 
     <section class="input-section">
-      <div class="action-buttons">
-        <select id="action-select" class="action-select">
-          <option value="">插入动作...</option>
-          <option value="evaluate">评价</option>
-          <option value="learn">借鉴</option>
-          <option value="critique">批评</option>
-          <option value="supplement">补充</option>
-          <option value="compare">对比</option>
-        </select>
-        <button class="shortcut-btn" id="mutual-btn" data-insert="/mutual ">/mutual</button>
-        <button class="shortcut-btn" id="cross-btn" data-insert="/cross ">/cross</button>
-        <button class="shortcut-btn" id="arrow-btn" data-insert=" <- "><-</button>
-      </div>
-      <div class="mention-buttons">
-        <span class="mention-label">@</span>
-        <button class="mention-btn claude" data-mention="@Claude">Claude</button>
-        <button class="mention-btn chatgpt" data-mention="@ChatGPT">ChatGPT</button>
-        <button class="mention-btn gemini" data-mention="@Gemini">Gemini</button>
+      <!-- Unified Toolbar -->
+      <div class="toolbar">
+        <div class="toolbar-group commands">
+          <button class="shortcut-btn" id="mutual-btn" data-insert="/mutual " title="互评：让所有 AI 互相评价">/mutual</button>
+          <button class="shortcut-btn" id="cross-btn" data-insert="/cross " title="交叉：两个围攻一个">/cross</button>
+          <button class="shortcut-btn" id="arrow-btn" data-insert=" <- " title="来源箭头：指定被评价的 AI">←</button>
+          <select id="action-select" class="action-select" title="插入动作词">
+            <option value="">动作</option>
+            <option value="evaluate">评价</option>
+            <option value="learn">借鉴</option>
+            <option value="critique">批评</option>
+            <option value="supplement">补充</option>
+            <option value="compare">对比</option>
+          </select>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group mentions">
+          <button class="mention-btn" data-mention="@Claude" title="引用 Claude">@Claude</button>
+          <button class="mention-btn" data-mention="@ChatGPT" title="引用 ChatGPT">@ChatGPT</button>
+          <button class="mention-btn" data-mention="@Gemini" title="引用 Gemini">@Gemini</button>
+        </div>
       </div>
       <textarea
         id="message-input"
         placeholder="输入消息...&#10;&#10;互评: /mutual（基于当前回复）&#10;单向: @Claude 评价一下 @ChatGPT"
         rows="6"
       ></textarea>
-      <!-- File Attachment -->
-      <div class="file-attachment">
+      <!-- Bottom Action Bar -->
+      <div class="action-bar">
         <input type="file" id="file-input" multiple hidden accept="image/*,.pdf,.txt,.md,.json,.csv,.xml,.html,.css,.js,.ts,.py">
         <button type="button" id="add-file-btn" class="add-file-btn" title="添加文件">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
           </svg>
-          <span>附件</span>
         </button>
         <div id="file-list" class="file-list"></div>
+        <button id="send-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+          发送
+        </button>
       </div>
-      <button id="send-btn">发送</button>
     </section>
 
     <section class="help">
@@ -122,7 +143,12 @@
           placeholder="输入讨论主题...&#10;&#10;示例：微服务架构和单体架构各有什么优缺点？"
           rows="4"
         ></textarea>
-        <button id="start-discussion-btn">开始讨论</button>
+        <button id="start-discussion-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          开始讨论
+        </button>
       </section>
 
       <section class="discussion-active hidden" id="discussion-active">
@@ -131,7 +157,12 @@
             <span class="round-badge" id="round-badge">第 1 轮</span>
             <span class="participants-badge" id="participants-badge">Claude vs ChatGPT</span>
           </div>
-          <button class="end-btn" id="end-discussion-btn">结束</button>
+          <button class="end-btn" id="end-discussion-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            </svg>
+            结束
+          </button>
         </div>
         <div class="discussion-topic-display" id="topic-display"></div>
         <div class="discussion-status" id="discussion-status">
@@ -144,19 +175,45 @@
             placeholder="输入你想对双方说的话..."
           ></textarea>
           <div class="interject-actions">
-            <button id="interject-btn">发送给双方</button>
+            <button id="interject-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+              </svg>
+              发送给双方
+            </button>
           </div>
         </div>
         <div class="discussion-controls">
-          <button id="next-round-btn" disabled>下一轮</button>
-          <button id="generate-summary-btn" disabled>生成总结</button>
+          <button id="next-round-btn" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 4 15 12 5 20 5 4"/>
+              <line x1="19" y1="5" x2="19" y2="19"/>
+            </svg>
+            下一轮
+          </button>
+          <button id="generate-summary-btn" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            生成总结
+          </button>
         </div>
       </section>
 
       <section class="discussion-summary hidden" id="discussion-summary">
         <h3>讨论总结</h3>
         <div id="summary-content"></div>
-        <button id="new-discussion-btn">新讨论</button>
+        <button id="new-discussion-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          新讨论
+        </button>
       </section>
     </div><!-- end discussion-mode -->
 
