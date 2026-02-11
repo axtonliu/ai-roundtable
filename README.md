@@ -284,6 +284,9 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ### Learn More
 
+- [MAPS™ AI Agent Course](https://www.axtonliu.ai/aiagent) - Systematic AI agent skills training
+- [Agent Skills Resource Library](https://www.axtonliu.ai/agent-skills) - Claude Code Skills collection and guides
+- [Claude Skills: A Systematic Guide](https://www.axtonliu.ai/newsletters/ai-2/posts/claude-agent-skills-maps-framework) - Complete methodology
 - [AI Elite Weekly Newsletter](https://www.axtonliu.ai/newsletters/ai-2) - Weekly AI insights
 - [Free AI Course](https://www.axtonliu.ai/axton-free-course) - Get started with AI
 
