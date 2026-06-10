@@ -62,110 +62,52 @@
   async function injectMessage(text) {
     // Gemini uses a rich text editor (contenteditable or textarea)
     const inputSelectors = [
-      '.ql-editor',
-      'div[contenteditable="true"]',
+      '.ql-editor[contenteditable="true"]',
+      'rich-textarea [contenteditable="true"]',
+      'div[contenteditable="true"][aria-label*="prompt" i]',
+      'div[contenteditable="true"][aria-label*="message" i]',
+      'div[contenteditable="true"][aria-label*="Ask" i]',
+      'div[contenteditable="true"][role="textbox"]',
       'rich-textarea textarea',
+      'textarea[aria-label*="Type something" i]',
       'textarea[aria-label*="prompt"]',
       'textarea[placeholder*="Enter"]',
       '.input-area textarea',
+      'div[contenteditable="true"]',
       'textarea'
     ];
 
-    let inputEl = null;
-    for (const selector of inputSelectors) {
-      inputEl = document.querySelector(selector);
-      if (inputEl && isVisible(inputEl)) break;
-    }
+    const inputEl = window.AIPanelDom?.findInputField(inputSelectors, { preferBottom: true });
 
     if (!inputEl) {
       throw new Error('Could not find input field');
     }
 
-    // Focus the input
-    inputEl.focus();
-
-    // Handle different input types
-    if (inputEl.tagName === 'TEXTAREA') {
-      inputEl.value = text;
-      inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-      inputEl.dispatchEvent(new Event('change', { bubbles: true }));
-    } else {
-      // Contenteditable div (Quill editor or similar)
-      inputEl.innerHTML = `<p>${escapeHtml(text)}</p>`;
-      inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-
-    // Small delay to let the UI process
-    await sleep(150);
-
-    // Find and click the send button
-    const sendButton = findSendButton();
-    if (!sendButton) {
-      throw new Error('Could not find send button');
-    }
-
-    // Wait for button to be enabled
-    await waitForButtonEnabled(sendButton);
-
-    sendButton.click();
+    await window.AIPanelDom.setEditorText(inputEl, text, { afterInputDelay: 650 });
+    const submitResult = await window.AIPanelDom.submitMessage(inputEl, {
+      selectors: [
+        'button[aria-label*="Send" i]',
+        'button[aria-label*="Submit" i]',
+        'button[aria-label*="Run" i]',
+        'button[mattooltip*="Send" i]',
+        'button[mattooltip*="Run" i]',
+        'button[data-test-id*="send" i]',
+        'button[data-testid*="send" i]',
+        'button.send-button',
+        '.input-area button',
+        'button mat-icon[data-mat-icon-name="send"]'
+      ],
+      positivePattern: /(send|submit|run|发送|提交|运行)/i,
+      enterFallback: true,
+      maxWait: 7000,
+      afterClickDelay: 900
+    });
 
     // Start capturing response after sending
-    console.log('[AI Panel] Gemini message sent, starting response capture...');
+    console.log('[AI Panel] Gemini message sent via', submitResult.method, 'starting response capture...');
     waitForStreamingComplete();
 
     return true;
-  }
-
-  function findSendButton() {
-    // Gemini's send button
-    const selectors = [
-      'button[aria-label*="Send"]',
-      'button[aria-label*="submit"]',
-      'button.send-button',
-      'button[data-test-id="send-button"]',
-      '.input-area button',
-      'button mat-icon[data-mat-icon-name="send"]'
-    ];
-
-    for (const selector of selectors) {
-      const el = document.querySelector(selector);
-      if (el && isVisible(el)) {
-        return el.closest('button') || el;
-      }
-    }
-
-    // Fallback: find button with send-related icon or near input
-    const buttons = document.querySelectorAll('button');
-    for (const btn of buttons) {
-      // Check for send icon or arrow
-      if (btn.querySelector('mat-icon, svg') && isVisible(btn)) {
-        const text = btn.textContent.toLowerCase();
-        const ariaLabel = (btn.getAttribute('aria-label') || '').toLowerCase();
-        if (text.includes('send') || ariaLabel.includes('send') ||
-            text.includes('submit') || ariaLabel.includes('submit')) {
-          return btn;
-        }
-      }
-    }
-
-    // Last resort: find button at bottom of page
-    for (const btn of buttons) {
-      const rect = btn.getBoundingClientRect();
-      if (rect.bottom > window.innerHeight - 150 && isVisible(btn)) {
-        if (btn.querySelector('svg, mat-icon')) {
-          return btn;
-        }
-      }
-    }
-
-    return null;
-  }
-
-  async function waitForButtonEnabled(button, maxWait = 2000) {
-    const start = Date.now();
-    while (button.disabled && Date.now() - start < maxWait) {
-      await sleep(50);
-    }
   }
 
   function setupResponseObserver() {
@@ -298,12 +240,6 @@
   }
 
   // Utility functions
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }

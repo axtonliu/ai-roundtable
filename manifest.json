@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AI 圆桌 - Multi-AI Roundtable",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "让多个 AI 助手围桌讨论，交叉评价，深度协作",
 
   "permissions": [
@@ -30,7 +30,7 @@
   "content_scripts": [
     {
       "matches": ["https://claude.ai/*"],
-      "js": ["content/claude.js"],
+      "js": ["content/dom-utils.js", "content/claude.js"],
       "run_at": "document_idle"
     },
     {
@@ -40,7 +40,7 @@
     },
     {
       "matches": ["https://gemini.google.com/*"],
-      "js": ["content/gemini.js"],
+      "js": ["content/dom-utils.js", "content/gemini.js"],
       "run_at": "document_idle"
     }
   ],

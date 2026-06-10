@@ -53,82 +53,48 @@
   setupResponseObserver();
 
   async function injectMessage(text) {
-    // Claude uses a contenteditable div with ProseMirror
+    // Claude uses a contenteditable rich-text editor. The exact attributes
+    // change often, so prefer semantic textbox/composer signals over one class.
     const inputSelectors = [
+      'div.ProseMirror[contenteditable="true"][data-placeholder]',
       'div[contenteditable="true"].ProseMirror',
       'div.ProseMirror[contenteditable="true"]',
+      'div[contenteditable="true"][data-placeholder*="Claude" i]',
+      'div[contenteditable="true"][aria-label*="Claude" i]',
+      'div[contenteditable="true"][aria-label*="message" i]',
+      'div[contenteditable="true"][role="textbox"]',
       '[data-placeholder="How can Claude help you today?"]',
+      '[data-placeholder*="How can" i][contenteditable="true"]',
       'fieldset div[contenteditable="true"]'
     ];
 
-    let inputEl = null;
-    for (const selector of inputSelectors) {
-      inputEl = document.querySelector(selector);
-      if (inputEl) break;
-    }
+    const inputEl = window.AIPanelDom?.findInputField(inputSelectors, { preferBottom: true });
 
     if (!inputEl) {
       throw new Error('Could not find input field');
     }
 
-    // Focus the input
-    inputEl.focus();
-
-    // Clear existing content and set new text
-    // For ProseMirror, we need to simulate typing or use clipboard
-    inputEl.innerHTML = `<p>${escapeHtml(text)}</p>`;
-
-    // Dispatch input event to trigger React state update
-    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-
-    // Small delay to let React process
-    await sleep(100);
-
-    // Find and click the send button
-    const sendButton = findSendButton();
-    if (!sendButton) {
-      throw new Error('Could not find send button');
-    }
-
-    sendButton.click();
+    await window.AIPanelDom.setEditorText(inputEl, text, { afterInputDelay: 500 });
+    const submitResult = await window.AIPanelDom.submitMessage(inputEl, {
+      selectors: [
+        'button[data-testid="send-button"]',
+        'button[aria-label*="Send message" i]',
+        'button[aria-label="Send" i]',
+        'button[type="submit"]',
+        'fieldset button svg',
+        'button svg[viewBox]'
+      ],
+      positivePattern: /(send|submit|发送|提交)/i,
+      allowUnlabeledNearInput: true,
+      enterFallback: true,
+      maxWait: 6000
+    });
 
     // Start capturing response after sending
-    console.log('[AI Panel] Claude message sent, starting response capture...');
+    console.log('[AI Panel] Claude message sent via', submitResult.method, 'starting response capture...');
     waitForStreamingComplete();
 
     return true;
-  }
-
-  function findSendButton() {
-    // Claude's send button is typically an SVG arrow or button with specific attributes
-    const selectors = [
-      'button[aria-label="Send message"]',
-      'button[aria-label="Send Message"]',
-      'button[type="submit"]',
-      'fieldset button:last-of-type',
-      'button svg[viewBox]' // Button containing an SVG
-    ];
-
-    for (const selector of selectors) {
-      const el = document.querySelector(selector);
-      if (el) {
-        // If we found an SVG, get its parent button
-        return el.closest('button') || el;
-      }
-    }
-
-    // Fallback: find button near the input
-    const buttons = document.querySelectorAll('button');
-    for (const btn of buttons) {
-      if (btn.querySelector('svg') && isVisible(btn)) {
-        const rect = btn.getBoundingClientRect();
-        if (rect.bottom > window.innerHeight - 200) {
-          return btn;
-        }
-      }
-    }
-
-    return null;
   }
 
   function setupResponseObserver() {
@@ -290,21 +256,8 @@
   }
 
   // Utility functions
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  function isVisible(el) {
-    const style = window.getComputedStyle(el);
-    return style.display !== 'none' &&
-           style.visibility !== 'hidden' &&
-           style.opacity !== '0';
   }
 
   // File injection using DataTransfer API
