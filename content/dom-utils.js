@@ -70,6 +70,19 @@
     el.dispatchEvent(event);
   }
 
+  function dispatchBeforeInput(el, inputType, data) {
+    try {
+      el.dispatchEvent(new InputEvent('beforeinput', {
+        bubbles: true,
+        cancelable: true,
+        inputType,
+        data
+      }));
+    } catch (err) {
+      // beforeinput is best-effort for rich text editors.
+    }
+  }
+
   function setNativeValue(el, value) {
     const proto = el.tagName === 'TEXTAREA'
       ? window.HTMLTextAreaElement?.prototype
@@ -91,6 +104,33 @@
     selection.addRange(range);
   }
 
+  function setSelectionToEnd(el) {
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  function activateElement(el) {
+    el.scrollIntoView?.({ block: 'center', inline: 'nearest' });
+
+    const eventOptions = { bubbles: true, cancelable: true, view: window };
+    try {
+      el.dispatchEvent(new PointerEvent('pointerdown', eventOptions));
+      el.dispatchEvent(new MouseEvent('mousedown', eventOptions));
+      el.dispatchEvent(new PointerEvent('pointerup', eventOptions));
+      el.dispatchEvent(new MouseEvent('mouseup', eventOptions));
+    } catch (err) {
+      el.dispatchEvent(new MouseEvent('mousedown', eventOptions));
+      el.dispatchEvent(new MouseEvent('mouseup', eventOptions));
+    }
+
+    el.click?.();
+    el.focus();
+  }
+
   function setEditableFallback(el, text) {
     const paragraphs = String(text).split('\n').map(line => {
       const div = document.createElement('div');
@@ -103,13 +143,14 @@
   async function setEditorText(el, text, options = {}) {
     if (!el) throw new Error('Input element is required');
 
-    el.scrollIntoView?.({ block: 'center', inline: 'nearest' });
-    el.focus();
+    activateElement(el);
 
     if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
       setNativeValue(el, '');
+      dispatchBeforeInput(el, 'deleteContentBackward', null);
       dispatchInput(el, 'deleteContentBackward', null);
       setNativeValue(el, text);
+      dispatchBeforeInput(el, 'insertText', text);
       dispatchInput(el, 'insertText', text);
       el.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
@@ -118,7 +159,10 @@
       let inserted = false;
       try {
         if (document.execCommand) {
+          document.execCommand('selectAll', false, null);
+          dispatchBeforeInput(el, 'deleteContentBackward', null);
           document.execCommand('delete', false, null);
+          dispatchBeforeInput(el, 'insertText', text);
           inserted = document.execCommand('insertText', false, text);
         }
       } catch (err) {
@@ -129,6 +173,7 @@
         setEditableFallback(el, text);
       }
 
+      setSelectionToEnd(el);
       dispatchInput(el, 'insertText', text);
       el.dispatchEvent(new Event('change', { bubbles: true }));
     }
@@ -159,7 +204,8 @@
       let score = 0;
 
       if (el.tagName === 'TEXTAREA') score += 10;
-      if (el.isContentEditable || el.getAttribute?.('contenteditable') === 'true') score += 10;
+      const contentEditable = el.getAttribute?.('contenteditable');
+      if (el.isContentEditable || (contentEditable && contentEditable !== 'false')) score += 10;
       if (el.getAttribute?.('role') === 'textbox') score += 10;
       if (/prompt|message|ask|type|chat|claude|gemini|输入|消息/.test(label)) score += 20;
       if (options.preferBottom && rect) score += Math.max(0, rect.top / Math.max(window.innerHeight, 1)) * 10;
@@ -341,20 +387,43 @@
       const remainingText = getElementText(inputEl).trim();
       if (options.enterFallback !== false && beforeText && remainingText === beforeText) {
         pressEnter(inputEl);
-        await sleep(250);
+        await sleep(options.afterEnterDelay ?? 500);
+        await verifySubmissionStarted(inputEl, beforeText, options);
         return { method: 'button+enter-fallback' };
       }
 
+      await verifySubmissionStarted(inputEl, beforeText, options);
       return { method: 'button' };
     }
 
     if (options.enterFallback !== false) {
       pressEnter(inputEl);
-      await sleep(250);
+      await sleep(options.afterEnterDelay ?? 500);
+      await verifySubmissionStarted(inputEl, beforeText, options);
       return { method: 'enter' };
     }
 
     throw new Error('Could not find enabled send button');
+  }
+
+  async function verifySubmissionStarted(inputEl, beforeText, options = {}) {
+    if (options.verifySubmitted === false || !beforeText) return true;
+
+    const start = Date.now();
+    const maxWait = options.verifyMaxWait ?? 2500;
+    while (Date.now() - start < maxWait) {
+      const currentText = getElementText(inputEl).trim();
+      if (!currentText || currentText !== beforeText) return true;
+
+      if (options.submittingSelectors?.some(selector => document.querySelector(selector))) {
+        return true;
+      }
+
+      if (!document.contains(inputEl)) return true;
+      await sleep(100);
+    }
+
+    throw new Error('Submit did not start: input text remained unchanged after click/Enter');
   }
 
   window.AIPanelDom = {
@@ -369,7 +438,8 @@
     getNodeLabel,
     _test: {
       scoreSubmitButton,
-      dispatchInput
+      dispatchInput,
+      verifySubmissionStarted
     }
   };
 })();

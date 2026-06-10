@@ -4,6 +4,10 @@
   'use strict';
 
   const AI_TYPE = 'claude';
+  const LOAD_FLAG = '__AIPanelContentLoaded_claude';
+  const LOAD_VERSION = chrome.runtime?.getManifest?.().version || 'unknown';
+  if (window[LOAD_FLAG] === LOAD_VERSION) return;
+  window[LOAD_FLAG] = LOAD_VERSION;
 
   // Check if extension context is still valid
   function isContextValid() {
@@ -57,15 +61,21 @@
     // change often, so prefer semantic textbox/composer signals over one class.
     const inputSelectors = [
       'div.ProseMirror[contenteditable="true"][data-placeholder]',
+      'div.ProseMirror[contenteditable]',
       'div[contenteditable="true"].ProseMirror',
       'div.ProseMirror[contenteditable="true"]',
+      'div[contenteditable][data-placeholder*="Claude" i]',
       'div[contenteditable="true"][data-placeholder*="Claude" i]',
+      'div[contenteditable][aria-label*="Claude" i]',
       'div[contenteditable="true"][aria-label*="Claude" i]',
+      'div[contenteditable][aria-label*="message" i]',
       'div[contenteditable="true"][aria-label*="message" i]',
+      'div[contenteditable][role="textbox"]',
       'div[contenteditable="true"][role="textbox"]',
       '[data-placeholder="How can Claude help you today?"]',
+      '[data-placeholder*="How can" i][contenteditable]',
       '[data-placeholder*="How can" i][contenteditable="true"]',
-      'fieldset div[contenteditable="true"]'
+      'fieldset div[contenteditable]'
     ];
 
     const inputEl = window.AIPanelDom?.findInputField(inputSelectors, { preferBottom: true });
@@ -87,7 +97,13 @@
       positivePattern: /(send|submit|发送|提交)/i,
       allowUnlabeledNearInput: true,
       enterFallback: true,
-      maxWait: 6000
+      maxWait: 6000,
+      verifyMaxWait: 3000,
+      submittingSelectors: [
+        'button[aria-label*="Stop" i]',
+        'button[data-testid*="stop" i]',
+        '[data-is-streaming="true"]'
+      ]
     });
 
     // Start capturing response after sending

@@ -4,6 +4,10 @@
   'use strict';
 
   const AI_TYPE = 'chatgpt';
+  const LOAD_FLAG = '__AIPanelContentLoaded_chatgpt';
+  const LOAD_VERSION = chrome.runtime?.getManifest?.().version || 'unknown';
+  if (window[LOAD_FLAG] === LOAD_VERSION) return;
+  window[LOAD_FLAG] = LOAD_VERSION;
 
   // Check if extension context is still valid
   function isContextValid() {
