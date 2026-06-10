@@ -172,9 +172,8 @@ async function sendFilesToAI(aiType, files) {
       return { success: false, error: `No ${aiType} tab found` };
     }
 
-    console.log('[AI Panel] Background: Sending INJECT_FILES to tab', tab.id);
-    // Send files to content script
-    const response = await chrome.tabs.sendMessage(tab.id, {
+    console.log('[AI Panel] Background: Sending INJECT_FILES to tab', tab.id, tab.url);
+    const response = await sendMessageToContentScript(tab, aiType, {
       type: 'INJECT_FILES',
       files
     });

@@ -256,12 +256,11 @@
            style.opacity !== '0';
   }
 
-  // File injection for Gemini
-  // Note: Gemini has strict security measures and may not support programmatic file upload
+  // File injection for Gemini. Gemini's UI changes frequently, so try the
+  // supported browser surfaces in order: file input, paste, then drop.
   async function injectFiles(filesData) {
     console.log('[AI Panel] Gemini injecting files:', filesData.length);
 
-    // Convert base64 to File objects
     const files = filesData.map(fileData => {
       const byteCharacters = atob(fileData.base64);
       const byteNumbers = new Array(byteCharacters.length);
@@ -273,59 +272,307 @@
       return new File([blob], fileData.name, { type: fileData.type });
     });
 
-    // Find all file inputs
-    const fileInputs = document.querySelectorAll('input[type="file"]');
-    console.log('[AI Panel] Gemini found', fileInputs.length, 'file inputs');
+    const beforeSnapshot = getUploadSnapshot(files);
+    const attempts = [];
 
-    if (fileInputs.length === 0) {
-      // Try to find and click the upload button to reveal file input
-      const uploadButtonSelectors = [
-        'button[aria-label*="Upload"]',
-        'button[aria-label*="upload"]',
-        'button[aria-label*="Add"]',
-        'button[aria-label*="Attach"]',
-        'button[aria-label*="image"]',
-        'button[aria-label*="file"]'
-      ];
+    if (await tryGeminiFileInputUpload(files, beforeSnapshot)) {
+      console.log('[AI Panel] Gemini files injected via file input');
+      return true;
+    }
+    attempts.push('file input');
 
-      for (const selector of uploadButtonSelectors) {
-        const btn = document.querySelector(selector);
-        if (btn && isVisible(btn)) {
-          console.log('[AI Panel] Gemini found upload button:', selector);
-          btn.click();
-          await sleep(500);
-          break;
+    if (await tryGeminiPasteUpload(files, beforeSnapshot)) {
+      console.log('[AI Panel] Gemini files injected via paste event');
+      return true;
+    }
+    attempts.push('paste');
+
+    if (await tryGeminiDropUpload(files, beforeSnapshot)) {
+      console.log('[AI Panel] Gemini files injected via drop event');
+      return true;
+    }
+    attempts.push('drop');
+
+    throw new Error(`Gemini 文件上传未被页面接受（已尝试: ${attempts.join(', ')}）。请手动上传，或打开 Gemini 页面 console 查看 [AI Panel] Gemini upload 日志。`);
+  }
+
+  async function tryGeminiFileInputUpload(files, beforeSnapshot) {
+    await revealGeminiFileInputs();
+
+    const fileInputs = getFileInputCandidates(files);
+    console.log('[AI Panel] Gemini file input candidates:', fileInputs.length);
+
+    for (const fileInput of fileInputs) {
+      try {
+        const dataTransfer = createFileDataTransfer(files);
+        fileInput.files = dataTransfer.files;
+        dispatchFileInputEvents(fileInput, dataTransfer);
+
+        if (await waitForGeminiUploadAccepted(files, beforeSnapshot, 8000)) {
+          return true;
+        }
+      } catch (e) {
+        console.log('[AI Panel] Gemini file input injection error:', e.message);
+      }
+    }
+
+    return false;
+  }
+
+  async function revealGeminiFileInputs() {
+    const beforeCount = document.querySelectorAll('input[type="file"]').length;
+    const buttons = findUploadButtons();
+    console.log('[AI Panel] Gemini upload buttons:', buttons.length, 'file inputs before:', beforeCount);
+
+    for (const btn of buttons.slice(0, 4)) {
+      clickElement(btn);
+      await sleep(350);
+
+      const menuItems = findUploadMenuItems();
+      for (const item of menuItems.slice(0, 3)) {
+        clickElement(item);
+        await sleep(350);
+        if (document.querySelectorAll('input[type="file"]').length > beforeCount) return;
+      }
+
+      if (document.querySelectorAll('input[type="file"]').length > beforeCount) return;
+    }
+  }
+
+  function findUploadButtons() {
+    const selectors = [
+      'button[aria-label*="Add files" i]',
+      'button[aria-label*="Upload" i]',
+      'button[aria-label*="Attach" i]',
+      'button[aria-label*="Add" i]',
+      'button[aria-label*="file" i]',
+      'button[mattooltip*="Add files" i]',
+      'button[mattooltip*="Upload" i]',
+      'button[mattooltip*="Attach" i]',
+      'button[data-test-id*="upload" i]',
+      'button[data-testid*="upload" i]'
+    ];
+    const matches = collectElements(selectors).filter(isVisible);
+    const buttons = Array.from(document.querySelectorAll('button, [role="button"]')).filter(el => {
+      if (!isVisible(el)) return false;
+      const label = getElementLabel(el).toLowerCase();
+      return /(add files|upload|attach|file|image|photo|添加文件|上传|附件|图片|照片)/i.test(label);
+    });
+
+    return uniqueElements([...matches, ...buttons]);
+  }
+
+  function findUploadMenuItems() {
+    const selectors = [
+      '[role="menuitem"]',
+      '[role="option"]',
+      'button',
+      'li',
+      '[data-test-id*="upload" i]',
+      '[data-testid*="upload" i]'
+    ];
+
+    return collectElements(selectors).filter(el => {
+      if (!isVisible(el)) return false;
+      const label = getElementLabel(el).toLowerCase();
+      return /(upload|files|file|device|computer|image|photo|上传|文件|本机|电脑|图片|照片)/i.test(label) &&
+             !/(drive|camera|photos|notebook|google drive|相机|云端硬盘|notebooklm)/i.test(label);
+    });
+  }
+
+  function getFileInputCandidates(files) {
+    const inputs = Array.from(document.querySelectorAll('input[type="file"]'));
+    const scored = inputs.map(input => ({ input, score: scoreFileInput(input, files) }))
+      .filter(item => item.score > -Infinity)
+      .sort((a, b) => b.score - a.score);
+
+    return scored.map(item => item.input);
+  }
+
+  function scoreFileInput(input, files) {
+    const accept = (input.getAttribute('accept') || '').toLowerCase();
+    const label = getElementLabel(input).toLowerCase();
+    let score = 0;
+
+    if (!input.disabled) score += 10;
+    if (input.multiple || files.length === 1) score += 10;
+    if (/image|file|upload|attach|gemini|上传|文件|图片/.test(`${accept} ${label}`)) score += 20;
+    if (!accept) score += 5;
+
+    for (const file of files) {
+      const type = (file.type || '').toLowerCase();
+      const ext = `.${file.name.split('.').pop()?.toLowerCase() || ''}`;
+      if (!accept ||
+          accept.includes(type) ||
+          accept.includes(type.split('/')[0] + '/*') ||
+          accept.includes(ext)) {
+        score += 10;
+      } else {
+        score -= 30;
+      }
+    }
+
+    return score;
+  }
+
+  async function tryGeminiPasteUpload(files, beforeSnapshot) {
+    const target = findGeminiUploadTarget();
+    if (!target) return false;
+
+    const dataTransfer = createFileDataTransfer(files);
+    target.focus?.();
+
+    let event;
+    try {
+      event = new ClipboardEvent('paste', {
+        bubbles: true,
+        cancelable: true,
+        clipboardData: dataTransfer
+      });
+    } catch (err) {
+      event = new Event('paste', { bubbles: true, cancelable: true });
+      Object.defineProperty(event, 'clipboardData', { value: dataTransfer });
+    }
+
+    target.dispatchEvent(event);
+    return await waitForGeminiUploadAccepted(files, beforeSnapshot, 8000);
+  }
+
+  async function tryGeminiDropUpload(files, beforeSnapshot) {
+    const target = findGeminiUploadTarget();
+    if (!target) return false;
+
+    const dataTransfer = createFileDataTransfer(files);
+    const events = ['dragenter', 'dragover', 'drop'];
+
+    for (const eventType of events) {
+      const event = new DragEvent(eventType, {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer
+      });
+      target.dispatchEvent(event);
+      await sleep(80);
+    }
+
+    return await waitForGeminiUploadAccepted(files, beforeSnapshot, 8000);
+  }
+
+  function dispatchFileInputEvents(fileInput, dataTransfer) {
+    const eventOptions = { bubbles: true, cancelable: true, composed: true };
+    fileInput.dispatchEvent(new Event('input', eventOptions));
+    fileInput.dispatchEvent(new Event('change', eventOptions));
+    fileInput.dispatchEvent(new CustomEvent('change', {
+      ...eventOptions,
+      detail: { files: dataTransfer.files }
+    }));
+  }
+
+  function findGeminiUploadTarget() {
+    const selectors = [
+      '.ql-editor[contenteditable="true"]',
+      'rich-textarea [contenteditable="true"]',
+      'div[contenteditable="true"][role="textbox"]',
+      'div[contenteditable="true"]',
+      'rich-textarea textarea',
+      'textarea',
+      'main',
+      '.conversation-container'
+    ];
+
+    return collectElements(selectors).find(isVisible) || document.body;
+  }
+
+  function createFileDataTransfer(files) {
+    const dataTransfer = new DataTransfer();
+    files.forEach(file => dataTransfer.items.add(file));
+    return dataTransfer;
+  }
+
+  async function waitForGeminiUploadAccepted(files, beforeSnapshot, maxWait) {
+    const start = Date.now();
+    while (Date.now() - start < maxWait) {
+      const snapshot = getUploadSnapshot(files);
+      if (snapshot.acceptedCount > beforeSnapshot.acceptedCount) return true;
+      if (snapshot.hasFileName && !beforeSnapshot.hasFileName) return true;
+      if (snapshot.hasAttachmentUi && snapshot.attachmentUiCount > beforeSnapshot.attachmentUiCount) return true;
+      await sleep(250);
+    }
+    return false;
+  }
+
+  function getUploadSnapshot(files) {
+    const text = document.body.innerText || '';
+    const hasFileName = files.some(file => text.includes(file.name));
+    const attachmentSelectors = [
+      '[aria-label*="Remove" i]',
+      '[aria-label*="Delete" i]',
+      '[aria-label*="attached" i]',
+      '[aria-label*="attachment" i]',
+      '[data-test-id*="attachment" i]',
+      '[data-testid*="attachment" i]',
+      '[data-test-id*="file" i]',
+      '[data-testid*="file" i]',
+      'mat-chip',
+      '[class*="attachment" i]',
+      '[class*="file-chip" i]',
+      '[class*="upload" i]'
+    ];
+    const attachmentUiCount = collectElements(attachmentSelectors).filter(isVisible).length;
+    const acceptedCount = files.reduce((count, file) => count + (text.includes(file.name) ? 1 : 0), 0);
+
+    return {
+      acceptedCount,
+      hasFileName,
+      hasAttachmentUi: attachmentUiCount > 0,
+      attachmentUiCount
+    };
+  }
+
+  function getElementLabel(el) {
+    if (!el) return '';
+    return [
+      el.getAttribute?.('aria-label'),
+      el.getAttribute?.('title'),
+      el.getAttribute?.('mattooltip'),
+      el.getAttribute?.('data-testid'),
+      el.getAttribute?.('data-test-id'),
+      el.getAttribute?.('accept'),
+      el.innerText,
+      el.textContent
+    ].filter(Boolean).join(' ');
+  }
+
+  function collectElements(selectors) {
+    const elements = [];
+    const seen = new Set();
+    for (const selector of selectors) {
+      for (const el of document.querySelectorAll(selector)) {
+        if (!seen.has(el)) {
+          seen.add(el);
+          elements.push(el);
         }
       }
     }
+    return elements;
+  }
 
-    // Try again after clicking button
-    const allInputs = document.querySelectorAll('input[type="file"]');
-    console.log('[AI Panel] Gemini file inputs after button click:', allInputs.length);
+  function uniqueElements(elements) {
+    return Array.from(new Set(elements));
+  }
 
-    for (const fileInput of allInputs) {
-      try {
-        const dataTransfer = new DataTransfer();
-        files.forEach(file => dataTransfer.items.add(file));
-        fileInput.files = dataTransfer.files;
-
-        // Dispatch events
-        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-        fileInput.dispatchEvent(new Event('input', { bubbles: true }));
-
-        console.log('[AI Panel] Gemini files set on input');
-        await sleep(1000);
-
-        // Check if upload was successful by looking for any new UI elements
-        return true;
-      } catch (e) {
-        console.log('[AI Panel] Gemini input injection error:', e.message);
-      }
+  function clickElement(el) {
+    const eventOptions = { bubbles: true, cancelable: true, view: window };
+    try {
+      el.dispatchEvent(new PointerEvent('pointerdown', eventOptions));
+      el.dispatchEvent(new MouseEvent('mousedown', eventOptions));
+      el.dispatchEvent(new PointerEvent('pointerup', eventOptions));
+      el.dispatchEvent(new MouseEvent('mouseup', eventOptions));
+    } catch (err) {
+      el.dispatchEvent(new MouseEvent('mousedown', eventOptions));
+      el.dispatchEvent(new MouseEvent('mouseup', eventOptions));
     }
-
-    // Gemini doesn't support programmatic file upload well
-    // Return error with helpful message
-    throw new Error('Gemini 暂不支持自动文件上传，请手动上传文件');
+    el.click?.();
   }
 
   console.log('[AI Panel] Gemini content script loaded');
